@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react"
+import { useState } from "react"
 import { useLiveQuery } from "dexie-react-hooks"
 import {
   Search,
@@ -9,6 +9,8 @@ import {
   PowerOff,
   Tag,
 } from "lucide-react"
+import { EmptyState } from "@/components/EmptyState"
+import { ConfirmDialog } from "@/components/ConfirmDialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -18,16 +20,6 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
 import {
   Select,
   SelectContent,
@@ -46,6 +38,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
 import { LoadingState } from "@/components/LoadingState"
+import { useCrudPageState } from "@/hooks/useCrudPageState"
 import { produtoService } from "@/services/produtoService"
 import { formatCurrency } from "@/lib/formatters"
 import { ProdutoForm } from "./ProdutoForm"
@@ -55,13 +48,20 @@ import type { ProdutoFormData } from "@/schemas/produto"
 type StatusFilter = "todos" | "ativo" | "inativo"
 
 export function ProdutosPage() {
-  const [search, setSearch] = useState("")
+  const {
+    search,
+    setSearch,
+    formOpen,
+    editing,
+    isSubmitting,
+    setSubmitting,
+    openCreate,
+    openEdit,
+    closeForm,
+  } = useCrudPageState<Produto>()
   const [categoriaFilter, setCategoriaFilter] = useState("todas")
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("todos")
-  const [formOpen, setFormOpen] = useState(false)
-  const [editing, setEditing] = useState<Produto | undefined>()
   const [toggling, setToggling] = useState<Produto | undefined>()
-  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const categorias = useLiveQuery(() => produtoService.getCategories())
 
@@ -86,23 +86,8 @@ export function ProdutosPage() {
     return results
   }, [search, categoriaFilter, statusFilter])
 
-  const openCreate = useCallback(() => {
-    setEditing(undefined)
-    setFormOpen(true)
-  }, [])
-
-  const openEdit = useCallback((produto: Produto) => {
-    setEditing(produto)
-    setFormOpen(true)
-  }, [])
-
-  const closeForm = useCallback(() => {
-    setFormOpen(false)
-    setEditing(undefined)
-  }, [])
-
   async function handleSubmit(data: ProdutoFormData) {
-    setIsSubmitting(true)
+    setSubmitting(true)
     try {
       if (editing?.id) {
         await produtoService.update(editing.id, data)
@@ -115,7 +100,7 @@ export function ProdutosPage() {
     } catch {
       toast.error("Erro ao salvar produto. Tente novamente.")
     } finally {
-      setIsSubmitting(false)
+      setSubmitting(false)
     }
   }
 
@@ -198,23 +183,23 @@ export function ProdutosPage() {
       {produtos === undefined ? (
         <LoadingState />
       ) : isEmpty ? (
-        <div className="rounded-lg border bg-card p-12 text-center">
-          <Package className="mx-auto h-12 w-12 text-muted-foreground/50" />
-          <h3 className="mt-4 text-lg font-semibold">
-            {hasFilters ? "Nenhum resultado" : "Nenhum produto cadastrado"}
-          </h3>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {hasFilters
+        <EmptyState
+          icon={Package}
+          title={hasFilters ? "Nenhum resultado" : "Nenhum produto cadastrado"}
+          description={
+            hasFilters
               ? "Tente buscar com outros termos ou altere os filtros."
-              : "Comece cadastrando seu primeiro produto."}
-          </p>
-          {!hasFilters && (
-            <Button onClick={openCreate} className="mt-4">
-              <Plus />
-              Novo Produto
-            </Button>
-          )}
-        </div>
+              : "Comece cadastrando seu primeiro produto."
+          }
+          action={
+            !hasFilters ? (
+              <Button onClick={openCreate}>
+                <Plus />
+                Novo Produto
+              </Button>
+            ) : undefined
+          }
+        />
       ) : (
         <>
           {/* Desktop Table */}
@@ -403,45 +388,31 @@ export function ProdutosPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Toggle Active Confirmation */}
-      <AlertDialog
+      <ConfirmDialog
         open={!!toggling}
         onOpenChange={(open) => !open && setToggling(undefined)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {toggling?.ativo ? "Desativar produto?" : "Reativar produto?"}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {toggling?.ativo ? (
-                <>
-                  O produto <strong>{toggling?.nome}</strong> será marcado como
-                  inativo e não aparecerá na seleção de novos orçamentos.
-                </>
-              ) : (
-                <>
-                  O produto <strong>{toggling?.nome}</strong> será reativado e
-                  ficará disponível para novos orçamentos.
-                </>
-              )}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleToggleActive}
-              className={
-                toggling?.ativo
-                  ? "bg-amber-600 text-white hover:bg-amber-600/90"
-                  : "bg-emerald-600 text-white hover:bg-emerald-600/90"
-              }
-            >
-              {toggling?.ativo ? "Desativar" : "Reativar"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        title={toggling?.ativo ? "Desativar produto?" : "Reativar produto?"}
+        description={
+          toggling?.ativo ? (
+            <>
+              O produto <strong>{toggling?.nome}</strong> será marcado como
+              inativo e não aparecerá na seleção de novos orçamentos.
+            </>
+          ) : (
+            <>
+              O produto <strong>{toggling?.nome}</strong> será reativado e
+              ficará disponível para novos orçamentos.
+            </>
+          )
+        }
+        confirmLabel={toggling?.ativo ? "Desativar" : "Reativar"}
+        confirmClassName={
+          toggling?.ativo
+            ? "bg-amber-600 text-white hover:bg-amber-600/90"
+            : "bg-emerald-600 text-white hover:bg-emerald-600/90"
+        }
+        onConfirm={handleToggleActive}
+      />
     </div>
   )
 }

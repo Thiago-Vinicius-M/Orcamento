@@ -1,20 +1,30 @@
 import { db } from "@/db"
 import type { Produto } from "@/types"
 import type { ProdutoFormData } from "@/schemas/produto"
+import { textIncludes } from "@/lib/searchUtils"
+import { createCrudService } from "./baseCrudService"
+
+const transformData = (data: ProdutoFormData): Partial<Produto> => ({
+  ...data,
+  descricao: data.descricao ?? "",
+  imagem: data.imagem ?? "",
+})
+
+const baseCrud = createCrudService<Produto, ProdutoFormData>({
+  table: db.produtos,
+  orderBy: "nome",
+  transformData,
+})
 
 export const produtoService = {
-  async getAll(): Promise<Produto[]> {
-    return db.produtos.orderBy("nome").toArray()
-  },
+  ...baseCrud,
 
   async search(query: string, categoria?: string): Promise<Produto[]> {
-    const lower = query.toLowerCase()
-
     return db.produtos
       .filter((p) => {
         if (categoria && p.categoria !== categoria) return false
-        if (p.nome.toLowerCase().includes(lower)) return true
-        if (p.codigoSku.toLowerCase().includes(lower)) return true
+        if (textIncludes(p.nome, query)) return true
+        if (textIncludes(p.codigoSku, query)) return true
         return false
       })
       .toArray()
@@ -24,31 +34,6 @@ export const produtoService = {
     return db.produtos.where("categoria").equals(categoria).sortBy("nome")
   },
 
-  async getById(id: number): Promise<Produto | undefined> {
-    return db.produtos.get(id)
-  },
-
-  async create(data: ProdutoFormData): Promise<number> {
-    const now = new Date()
-    const id = await db.produtos.add({
-      ...data,
-      descricao: data.descricao ?? "",
-      imagem: data.imagem ?? "",
-      createdAt: now,
-      updatedAt: now,
-    } as Produto)
-    return id as number
-  },
-
-  async update(id: number, data: ProdutoFormData): Promise<void> {
-    await db.produtos.update(id, {
-      ...data,
-      descricao: data.descricao ?? "",
-      imagem: data.imagem ?? "",
-      updatedAt: new Date(),
-    })
-  },
-
   async toggleActive(id: number): Promise<void> {
     const produto = await db.produtos.get(id)
     if (!produto) return
@@ -56,14 +41,6 @@ export const produtoService = {
       ativo: !produto.ativo,
       updatedAt: new Date(),
     })
-  },
-
-  async remove(id: number): Promise<void> {
-    await db.produtos.delete(id)
-  },
-
-  async count(): Promise<number> {
-    return db.produtos.count()
   },
 
   async getCategories(): Promise<string[]> {

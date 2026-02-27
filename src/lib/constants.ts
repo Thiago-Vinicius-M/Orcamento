@@ -42,14 +42,29 @@ export const STATUS_CONFIG: Record<
   },
 }
 
-export function formatNumeroOrcamento(n: number): string {
-  return `#${String(n).padStart(3, "0")}`
-}
-
 export const FORMAS_PAGAMENTO: { value: FormaPagamento; label: string }[] = [
   { value: "dinheiro", label: "Dinheiro" },
   { value: "pix", label: "PIX" },
   { value: "cartao_credito", label: "Cartão de Crédito" },
   { value: "cartao_debito", label: "Cartão de Débito" },
   { value: "financiamento", label: "Financiamento" },
+]
+
+export const FORMA_PAGAMENTO_LABELS: Record<string, string> =
+  Object.fromEntries(FORMAS_PAGAMENTO.map(({ value, label }) => [value, label]))
+
+export const STATUS_ORCAMENTO_LABELS: Record<StatusOrcamento, string> = {
+  vigente: "Vigente",
+  expirado: "Expirado",
+  aprovado: "Aprovado",
+  cancelado: "Cancelado",
+}
+
+export type StatusFilter = "todos" | StatusOrcamento
+
+export const VALID_STATUS: StatusOrcamento[] = [
+  "vigente",
+  "expirado",
+  "aprovado",
+  "cancelado",
 ]

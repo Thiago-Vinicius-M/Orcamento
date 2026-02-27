@@ -18,22 +18,21 @@ export const condicaoPagamentoSchema = z.object({
   valorParcela: z.number().min(0).default(0),
   valorTotal: z.number().min(0).default(0),
   descontoPercentual: z.number().min(0).max(100).default(0),
-  observacoes: z.string().optional().default(""),
+  observacoes: z.string().default(""),
 })
 
 export const orcamentoSchema = z.object({
   clienteId: z.number().positive("Selecione um cliente"),
   descontoValor: z.number().min(0).default(0),
   descontoPercentual: z.number().min(0).max(100).default(0),
-  observacoes: z.string().optional().default(""),
+  observacoes: z.string().default(""),
   itens: z.array(itemOrcamentoSchema).min(1, "Adicione pelo menos um item"),
   condicoesPagamento: z
     .array(condicaoPagamentoSchema)
     .min(1, "Adicione pelo menos uma condição de pagamento"),
 })
 
-export type OrcamentoFormData = z.infer<typeof orcamentoSchema>
-export type ItemOrcamentoFormData = z.infer<typeof itemOrcamentoSchema>
-export type CondicaoPagamentoFormData = z.infer<
-  typeof condicaoPagamentoSchema
->
+/** Tipo do formulário após parsing (com defaults aplicados) - uso em useForm */
+export type OrcamentoFormData = z.output<typeof orcamentoSchema>
+export type ItemOrcamentoFormData = z.output<typeof itemOrcamentoSchema>
+export type CondicaoPagamentoFormData = z.output<typeof condicaoPagamentoSchema>

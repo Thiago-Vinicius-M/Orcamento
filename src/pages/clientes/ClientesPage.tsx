@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react"
+import { useState } from "react"
 import { useLiveQuery } from "dexie-react-hooks"
 import {
   Search,
@@ -10,6 +10,8 @@ import {
   Mail,
   MapPin,
 } from "lucide-react"
+import { EmptyState } from "@/components/EmptyState"
+import { ConfirmDialog } from "@/components/ConfirmDialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -19,16 +21,6 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
 import {
   Table,
   TableBody,
@@ -40,6 +32,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
 import { LoadingState } from "@/components/LoadingState"
+import { useCrudPageState } from "@/hooks/useCrudPageState"
 import { clienteService } from "@/services/clienteService"
 import { formatCpfCnpj, formatPhone } from "@/lib/formatters"
 import { ClienteForm } from "./ClienteForm"
@@ -47,11 +40,19 @@ import type { Cliente } from "@/types"
 import type { ClienteFormData } from "@/schemas/cliente"
 
 export function ClientesPage() {
-  const [search, setSearch] = useState("")
-  const [formOpen, setFormOpen] = useState(false)
-  const [editing, setEditing] = useState<Cliente | undefined>()
-  const [deleting, setDeleting] = useState<Cliente | undefined>()
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const {
+    search,
+    setSearch,
+    formOpen,
+    editing,
+    deleting,
+    setDeleting,
+    isSubmitting,
+    setSubmitting,
+    openCreate,
+    openEdit,
+    closeForm,
+  } = useCrudPageState<Cliente>()
   const [expandedId, setExpandedId] = useState<number | null>(null)
 
   const clientes = useLiveQuery(async () => {
@@ -61,23 +62,8 @@ export function ClientesPage() {
     return clienteService.getAll()
   }, [search])
 
-  const openCreate = useCallback(() => {
-    setEditing(undefined)
-    setFormOpen(true)
-  }, [])
-
-  const openEdit = useCallback((cliente: Cliente) => {
-    setEditing(cliente)
-    setFormOpen(true)
-  }, [])
-
-  const closeForm = useCallback(() => {
-    setFormOpen(false)
-    setEditing(undefined)
-  }, [])
-
   async function handleSubmit(data: ClienteFormData) {
-    setIsSubmitting(true)
+    setSubmitting(true)
     try {
       if (editing?.id) {
         await clienteService.update(editing.id, data)
@@ -90,7 +76,7 @@ export function ClientesPage() {
     } catch {
       toast.error("Erro ao salvar cliente. Tente novamente.")
     } finally {
-      setIsSubmitting(false)
+      setSubmitting(false)
     }
   }
 
@@ -143,23 +129,23 @@ export function ClientesPage() {
       {clientes === undefined ? (
         <LoadingState />
       ) : isEmpty ? (
-        <div className="rounded-lg border bg-card p-12 text-center">
-          <Users className="mx-auto h-12 w-12 text-muted-foreground/50" />
-          <h3 className="mt-4 text-lg font-semibold">
-            {isSearchEmpty ? "Nenhum resultado" : "Nenhum cliente cadastrado"}
-          </h3>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {isSearchEmpty
+        <EmptyState
+          icon={Users}
+          title={isSearchEmpty ? "Nenhum resultado" : "Nenhum cliente cadastrado"}
+          description={
+            isSearchEmpty
               ? "Tente buscar com outros termos."
-              : "Comece cadastrando seu primeiro cliente."}
-          </p>
-          {!isSearchEmpty && (
-            <Button onClick={openCreate} className="mt-4">
-              <Plus />
-              Novo Cliente
-            </Button>
-          )}
-        </div>
+              : "Comece cadastrando seu primeiro cliente."
+          }
+          action={
+            !isSearchEmpty ? (
+              <Button onClick={openCreate}>
+                <Plus />
+                Novo Cliente
+              </Button>
+            ) : undefined
+          }
+        />
       ) : (
         <>
           {/* Desktop */}
@@ -335,30 +321,20 @@ export function ClientesPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation */}
-      <AlertDialog
+      <ConfirmDialog
         open={!!deleting}
         onOpenChange={(open) => !open && setDeleting(undefined)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Excluir cliente?</AlertDialogTitle>
-            <AlertDialogDescription>
-              O cliente <strong>{deleting?.nome}</strong> será removido
-              permanentemente. Esta ação não pode ser desfeita.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              className="bg-destructive text-white hover:bg-destructive/90"
-            >
-              Excluir
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        title="Excluir cliente?"
+        description={
+          <>
+            O cliente <strong>{deleting?.nome}</strong> será removido
+            permanentemente. Esta ação não pode ser desfeita.
+          </>
+        }
+        confirmLabel="Excluir"
+        confirmClassName="bg-destructive text-white hover:bg-destructive/90"
+        onConfirm={handleDelete}
+      />
     </div>
   )
 }

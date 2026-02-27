@@ -12,13 +12,14 @@ import {
   Calendar,
 } from "lucide-react"
 import { LoadingState } from "@/components/LoadingState"
+import { EmptyState } from "@/components/EmptyState"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { db } from "@/db"
-import { orcamentoService } from "@/services/orcamentoService"
-import { formatCurrency, formatDate, STATUS_ORCAMENTO_LABELS } from "@/lib/formatters"
-import { STATUS_STYLES, STATUS_CONFIG, formatNumeroOrcamento } from "@/lib/constants"
+import { dashboardService } from "@/services/dashboardService"
+import { formatCurrency, formatDate, formatNumeroOrcamento } from "@/lib/formatters"
+import { STATUS_STYLES, STATUS_CONFIG, STATUS_ORCAMENTO_LABELS } from "@/lib/constants"
 import type { StatusOrcamento } from "@/types"
 
 export function Dashboard() {
@@ -27,7 +28,7 @@ export function Dashboard() {
   const clienteCount = useLiveQuery(() => db.clientes.count())
   const produtoCount = useLiveQuery(() => db.produtos.count())
   const dashboardStats = useLiveQuery(() =>
-    orcamentoService.getDashboardStats(),
+    dashboardService.getStats(),
   )
 
   const statusEntries: StatusOrcamento[] = [
@@ -138,20 +139,19 @@ export function Dashboard() {
           {dashboardStats === undefined ? (
             <LoadingState />
           ) : dashboardStats.recentes.length === 0 ? (
-            <div className="rounded-lg border bg-card p-8 text-center">
-              <FileText className="mx-auto h-10 w-10 text-muted-foreground/50" />
-              <p className="mt-3 text-sm text-muted-foreground">
-                Nenhum orçamento cadastrado ainda.
-              </p>
-              <Button
-                onClick={() => navigate("/orcamentos/novo")}
-                size="sm"
-                className="mt-3"
-              >
-                <Plus />
-                Criar Primeiro Orçamento
-              </Button>
-            </div>
+            <EmptyState
+              icon={FileText}
+              description="Nenhum orçamento cadastrado ainda."
+              action={
+                <Button
+                  onClick={() => navigate("/orcamentos/novo")}
+                  size="sm"
+                >
+                  <Plus />
+                  Criar Primeiro Orçamento
+                </Button>
+              }
+            />
           ) : (
             <div className="space-y-2">
               {dashboardStats.recentes.map((orc) => (

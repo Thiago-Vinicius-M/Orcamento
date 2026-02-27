@@ -33,21 +33,19 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { orcamentoService } from "@/services/orcamentoService"
-import { clienteService } from "@/services/clienteService"
-import { produtoService } from "@/services/produtoService"
-import { generateOrcamentoPdf, LojaNotConfiguredError } from "@/services/pdfService"
 import { LoadingState } from "@/components/LoadingState"
 import {
   formatCurrency,
   formatDate,
   formatCpfCnpj,
   formatPhone,
-  STATUS_ORCAMENTO_LABELS,
-  FORMA_PAGAMENTO_LABELS,
+  formatNumeroOrcamento,
 } from "@/lib/formatters"
 import { toast } from "sonner"
-import { STATUS_STYLES } from "@/lib/constants"
-import type { StatusOrcamento, Produto, Cliente } from "@/types"
+import { STATUS_STYLES, STATUS_ORCAMENTO_LABELS, FORMA_PAGAMENTO_LABELS } from "@/lib/constants"
+import { useOrcamentoActions } from "@/hooks/useOrcamentoActions"
+import { canChangeStatus } from "@/lib/orcamentoDomain"
+import type { StatusOrcamento } from "@/types"
 
 export function OrcamentoViewPage() {
   const { id } = useParams()
@@ -55,27 +53,15 @@ export function OrcamentoViewPage() {
   const [statusAction, setStatusAction] = useState<StatusOrcamento | null>(
     null,
   )
-  const [isDuplicating, setIsDuplicating] = useState(false)
+  const {
+    duplicating,
+    handleDuplicate,
+    handleGeneratePdf,
+  } = useOrcamentoActions()
 
   const data = useLiveQuery(async () => {
     if (!id) return null
-    const result = await orcamentoService.getById(Number(id))
-    if (!result) return null
-
-    const cliente = await clienteService.getById(result.orcamento.clienteId)
-    const produtosMap = new Map<number, Produto>()
-    for (const item of result.itens) {
-      if (!produtosMap.has(item.produtoId)) {
-        const produto = await produtoService.getById(item.produtoId)
-        if (produto) produtosMap.set(item.produtoId, produto)
-      }
-    }
-
-    return {
-      ...result,
-      cliente: cliente as Cliente | undefined,
-      produtosMap,
-    }
+    return (await orcamentoService.getByIdWithDetails(Number(id))) ?? null
   }, [id])
 
   async function handleStatusChange() {
@@ -91,34 +77,6 @@ export function OrcamentoViewPage() {
       toast.error("Erro ao alterar status do orçamento.")
     }
     setStatusAction(null)
-  }
-
-  async function handleDuplicate() {
-    if (!id) return
-    setIsDuplicating(true)
-    try {
-      const newId = await orcamentoService.duplicate(Number(id))
-      toast.success("Orçamento duplicado com sucesso!")
-      navigate(`/orcamentos/${newId}`)
-    } catch {
-      toast.error("Erro ao duplicar orçamento.")
-    } finally {
-      setIsDuplicating(false)
-    }
-  }
-
-  async function handleGeneratePdf() {
-    if (!id) return
-    try {
-      await generateOrcamentoPdf(Number(id))
-      toast.success("PDF gerado com sucesso!")
-    } catch (err) {
-      if (err instanceof LojaNotConfiguredError) {
-        toast.error(err.message)
-      } else {
-        toast.error("Erro ao gerar PDF.")
-      }
-    }
   }
 
   if (data === undefined) {
@@ -137,7 +95,7 @@ export function OrcamentoViewPage() {
   }
 
   const { orcamento, itens, condicoes, cliente, produtosMap } = data
-  const fmtNum = `#${String(orcamento.numero).padStart(3, "0")}`
+  const fmtNum = formatNumeroOrcamento(orcamento.numero)
 
   return (
     <div className="space-y-6">
@@ -190,17 +148,17 @@ export function OrcamentoViewPage() {
         <Button
           variant="outline"
           size="sm"
-          onClick={handleDuplicate}
-          disabled={isDuplicating}
+          onClick={() => handleDuplicate(Number(id))}
+          disabled={duplicating}
         >
           <Copy />
           Duplicar
         </Button>
-        <Button variant="outline" size="sm" onClick={handleGeneratePdf}>
+        <Button variant="outline" size="sm" onClick={() => handleGeneratePdf(Number(id))}>
           <FileDown />
           PDF
         </Button>
-        {orcamento.status !== "aprovado" && (
+        {canChangeStatus(orcamento, "aprovado") && (
           <Button
             variant="outline"
             size="sm"
@@ -211,7 +169,7 @@ export function OrcamentoViewPage() {
             Aprovar
           </Button>
         )}
-        {orcamento.status !== "cancelado" && (
+        {canChangeStatus(orcamento, "cancelado") && (
           <Button
             variant="outline"
             size="sm"

@@ -14,8 +14,9 @@ import {
   formatCpfCnpj,
   formatPhone,
   formatCep,
-  FORMA_PAGAMENTO_LABELS,
+  formatNumeroOrcamento,
 } from "@/lib/formatters"
+import { FORMA_PAGAMENTO_LABELS } from "@/lib/constants"
 
 export interface DadosPdf {
   loja: Loja
@@ -114,7 +115,7 @@ function drawHeader(doc: jsPDF, loja: Loja, orcamento: Orcamento): number {
 
   const badgeY = y
   const pageW = getPageWidth(doc)
-  const numStr = `ORÇAMENTO #${String(orcamento.numero).padStart(3, "0")}`
+  const numStr = `ORÇAMENTO ${formatNumeroOrcamento(orcamento.numero)}`
 
   doc.setFont("helvetica", "bold")
   doc.setFontSize(12)
@@ -423,6 +424,5 @@ export async function gerarPdfOrcamento(dados: DadosPdf): Promise<void> {
 
   drawFooter(doc)
 
-  const numStr = String(orcamento.numero).padStart(3, "0")
-  doc.save(`orcamento_${numStr}.pdf`)
+  doc.save(`orcamento_${String(orcamento.numero).padStart(3, "0")}.pdf`)
 }

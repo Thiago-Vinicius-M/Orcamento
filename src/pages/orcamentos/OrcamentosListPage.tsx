@@ -1,6 +1,5 @@
-import { useState, useEffect, useCallback } from "react"
-import { useNavigate, useSearchParams } from "react-router-dom"
-import { useLiveQuery } from "dexie-react-hooks"
+import { useState } from "react"
+import { useNavigate } from "react-router-dom"
 import {
   Search,
   Plus,
@@ -13,15 +12,9 @@ import {
   FileDown,
   X,
 } from "lucide-react"
+import { EmptyState } from "@/components/EmptyState"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import {
   Table,
   TableBody,
@@ -30,176 +23,47 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
+import { ConfirmDialog } from "@/components/ConfirmDialog"
 import { Badge } from "@/components/ui/badge"
-import { toast } from "sonner"
-import {
-  orcamentoService,
-  type OrcamentoListItem,
-} from "@/services/orcamentoService"
-import { generateOrcamentoPdf, LojaNotConfiguredError } from "@/services/pdfService"
+import type { OrcamentoListItem } from "@/services/orcamentoService"
 import { LoadingState } from "@/components/LoadingState"
 import {
   formatCurrency,
   formatDate,
-  STATUS_ORCAMENTO_LABELS,
+  formatNumeroOrcamento,
 } from "@/lib/formatters"
-import { STATUS_STYLES, STATUS_CONFIG, formatNumeroOrcamento } from "@/lib/constants"
-import type { StatusOrcamento } from "@/types"
-
-type StatusFilter = "todos" | StatusOrcamento
-const VALID_STATUS: StatusOrcamento[] = [
-  "vigente",
-  "expirado",
-  "aprovado",
-  "cancelado",
-]
+import { STATUS_STYLES, STATUS_CONFIG, STATUS_ORCAMENTO_LABELS } from "@/lib/constants"
+import { useOrcamentoActions } from "@/hooks/useOrcamentoActions"
+import { useOrcamentoFilters } from "@/hooks/useOrcamentoFilters"
 
 export function OrcamentosListPage() {
   const navigate = useNavigate()
-  const [searchParams, setSearchParams] = useSearchParams()
-
-  const initialStatus = searchParams.get("status")
-  const [search, setSearch] = useState("")
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>(
-    initialStatus && VALID_STATUS.includes(initialStatus as StatusOrcamento)
-      ? (initialStatus as StatusOrcamento)
-      : "todos",
-  )
-  const [dateFrom, setDateFrom] = useState("")
-  const [dateTo, setDateTo] = useState("")
   const [deleting, setDeleting] = useState<OrcamentoListItem | undefined>()
-  const [duplicating, setDuplicating] = useState(false)
-  const [generatingPdf, setGeneratingPdf] = useState<number | null>(null)
+  const { duplicating, generatingPdfId, handleDuplicate, handleGeneratePdf, handleDelete } =
+    useOrcamentoActions()
 
-  useEffect(() => {
-    const s = searchParams.get("status")
-    if (s && VALID_STATUS.includes(s as StatusOrcamento)) {
-      setStatusFilter(s as StatusOrcamento)
-    }
-  }, [searchParams])
+  const {
+    search,
+    setSearch,
+    statusFilter,
+    dateFrom,
+    setDateFrom,
+    dateTo,
+    setDateTo,
+    orcamentos,
+    statusCounts,
+    clearFilters,
+    handleStatusFilterChange,
+    isEmpty,
+    hasFilters,
+    VALID_STATUS,
+  } = useOrcamentoFilters()
 
-  function handleStatusFilterChange(v: StatusFilter) {
-    setStatusFilter(v)
-    if (v === "todos") {
-      searchParams.delete("status")
-    } else {
-      searchParams.set("status", v)
-    }
-    setSearchParams(searchParams, { replace: true })
-  }
-
-  const orcamentos = useLiveQuery(async () => {
-    const all = await orcamentoService.getAll()
-    let filtered = all
-
-    if (search.trim()) {
-      const lower = search.toLowerCase()
-      filtered = filtered.filter(
-        (o) =>
-          o.clienteNome.toLowerCase().includes(lower) ||
-          String(o.numero).includes(search.trim()),
-      )
-    }
-
-    if (statusFilter !== "todos") {
-      filtered = filtered.filter((o) => o.status === statusFilter)
-    }
-
-    if (dateFrom) {
-      const from = new Date(dateFrom + "T00:00:00")
-      filtered = filtered.filter(
-        (o) => new Date(o.dataEmissao) >= from,
-      )
-    }
-
-    if (dateTo) {
-      const to = new Date(dateTo + "T23:59:59")
-      filtered = filtered.filter(
-        (o) => new Date(o.dataEmissao) <= to,
-      )
-    }
-
-    return filtered
-  }, [search, statusFilter, dateFrom, dateTo])
-
-  const statusCounts = useLiveQuery(async () => {
-    const all = await orcamentoService.getAll()
-    const counts: Record<string, number> = {
-      todos: all.length,
-      vigente: 0,
-      expirado: 0,
-      aprovado: 0,
-      cancelado: 0,
-    }
-    for (const o of all) counts[o.status]++
-    return counts
-  })
-
-  async function handleDelete() {
+  async function onConfirmDelete() {
     if (!deleting?.id) return
-    try {
-      await orcamentoService.remove(deleting.id)
-      toast.success("Orçamento excluído com sucesso!")
-    } catch {
-      toast.error("Erro ao excluir orçamento.")
-    }
+    await handleDelete(deleting.id)
     setDeleting(undefined)
   }
-
-  async function handleDuplicate(orc: OrcamentoListItem) {
-    setDuplicating(true)
-    try {
-      const newId = await orcamentoService.duplicate(orc.id!)
-      toast.success("Orçamento duplicado com sucesso!")
-      navigate(`/orcamentos/${newId}`)
-    } catch {
-      toast.error("Erro ao duplicar orçamento.")
-    } finally {
-      setDuplicating(false)
-    }
-  }
-
-  const handleGeneratePdf = useCallback(async (orc: OrcamentoListItem) => {
-    setGeneratingPdf(orc.id!)
-    try {
-      await generateOrcamentoPdf(orc.id!)
-      toast.success("PDF gerado com sucesso!")
-    } catch (err) {
-      if (err instanceof LojaNotConfiguredError) {
-        toast.error(err.message)
-      } else {
-        toast.error("Erro ao gerar PDF.")
-      }
-    } finally {
-      setGeneratingPdf(null)
-    }
-  }, [])
-
-  function clearFilters() {
-    setSearch("")
-    setStatusFilter("todos")
-    setDateFrom("")
-    setDateTo("")
-    searchParams.delete("status")
-    setSearchParams(searchParams, { replace: true })
-  }
-
-  const isEmpty = orcamentos && orcamentos.length === 0
-  const hasFilters =
-    search.trim().length > 0 ||
-    statusFilter !== "todos" ||
-    dateFrom !== "" ||
-    dateTo !== ""
 
   return (
     <div className="space-y-4">
@@ -330,37 +194,28 @@ export function OrcamentosListPage() {
       {orcamentos === undefined ? (
         <LoadingState />
       ) : isEmpty ? (
-        <div className="rounded-lg border bg-card p-12 text-center">
-          <FileText className="mx-auto h-12 w-12 text-muted-foreground/50" />
-          <h3 className="mt-4 text-lg font-semibold">
-            {hasFilters
-              ? "Nenhum resultado"
-              : "Nenhum orçamento cadastrado"}
-          </h3>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {hasFilters
+        <EmptyState
+          icon={FileText}
+          title={hasFilters ? "Nenhum resultado" : "Nenhum orçamento cadastrado"}
+          description={
+            hasFilters
               ? "Tente buscar com outros termos ou altere os filtros."
-              : "Comece criando seu primeiro orçamento."}
-          </p>
-          {hasFilters ? (
-            <Button
-              variant="outline"
-              onClick={clearFilters}
-              className="mt-4"
-            >
-              <X />
-              Limpar Filtros
-            </Button>
-          ) : (
-            <Button
-              onClick={() => navigate("/orcamentos/novo")}
-              className="mt-4"
-            >
-              <Plus />
-              Novo Orçamento
-            </Button>
-          )}
-        </div>
+              : "Comece criando seu primeiro orçamento."
+          }
+          action={
+            hasFilters ? (
+              <Button variant="outline" onClick={clearFilters}>
+                <X />
+                Limpar Filtros
+              </Button>
+            ) : (
+              <Button onClick={() => navigate("/orcamentos/novo")}>
+                <Plus />
+                Novo Orçamento
+              </Button>
+            )
+          }
+        />
       ) : (
         <>
           {/* Desktop Table */}
@@ -440,7 +295,7 @@ export function OrcamentosListPage() {
                         <Button
                           variant="ghost"
                           size="icon-xs"
-                          onClick={() => handleDuplicate(orc)}
+                          onClick={() => handleDuplicate(orc.id!)}
                           disabled={duplicating}
                           title="Duplicar"
                         >
@@ -449,8 +304,8 @@ export function OrcamentosListPage() {
                         <Button
                           variant="ghost"
                           size="icon-xs"
-                          onClick={() => handleGeneratePdf(orc)}
-                          disabled={generatingPdf === orc.id}
+                          onClick={() => handleGeneratePdf(orc.id!)}
+                          disabled={generatingPdfId === orc.id}
                           title="Gerar PDF"
                         >
                           <FileDown />
@@ -524,9 +379,9 @@ export function OrcamentosListPage() {
                       size="icon-xs"
                       onClick={(e) => {
                         e.stopPropagation()
-                        handleGeneratePdf(orc)
+                        handleGeneratePdf(orc.id!)
                       }}
-                      disabled={generatingPdf === orc.id}
+                      disabled={generatingPdfId === orc.id}
                       title="Gerar PDF"
                     >
                       <FileDown />
@@ -551,34 +406,24 @@ export function OrcamentosListPage() {
         </>
       )}
 
-      {/* Delete Confirmation */}
-      <AlertDialog
+      <ConfirmDialog
         open={!!deleting}
         onOpenChange={(open) => !open && setDeleting(undefined)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Excluir orçamento?</AlertDialogTitle>
-            <AlertDialogDescription>
-              O orçamento{" "}
-              <strong>
-                {deleting && formatNumeroOrcamento(deleting.numero)}
-              </strong>{" "}
-              de <strong>{deleting?.clienteNome}</strong> será removido
-              permanentemente. Esta ação não pode ser desfeita.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              className="bg-destructive text-white hover:bg-destructive/90"
-            >
-              Excluir
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        title="Excluir orçamento?"
+        description={
+          <>
+            O orçamento{" "}
+            <strong>
+              {deleting && formatNumeroOrcamento(deleting.numero)}
+            </strong>{" "}
+            de <strong>{deleting?.clienteNome}</strong> será removido
+            permanentemente. Esta ação não pode ser desfeita.
+          </>
+        }
+        confirmLabel="Excluir"
+        confirmClassName="bg-destructive text-white hover:bg-destructive/90"
+        onConfirm={onConfirmDelete}
+      />
     </div>
   )
 }

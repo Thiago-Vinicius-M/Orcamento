@@ -1,9 +1,14 @@
 import { useState, useEffect, useMemo } from "react"
 import { useNavigate, useParams } from "react-router-dom"
-import { useForm, useFieldArray, Controller } from "react-hook-form"
+import {
+  useForm,
+  useFieldArray,
+  Controller,
+  type Resolver,
+} from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useLiveQuery } from "dexie-react-hooks"
-import { ArrowLeft, Plus, Trash2 } from "lucide-react"
+import { ArrowLeft, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -22,8 +27,13 @@ import { clienteService } from "@/services/clienteService"
 import { produtoService } from "@/services/produtoService"
 import { toast } from "sonner"
 import { formatCurrency, formatCpfCnpj } from "@/lib/formatters"
-import { FORMAS_PAGAMENTO } from "@/lib/constants"
 import { LoadingState } from "@/components/LoadingState"
+import { OrcamentoItemRow } from "@/components/orcamento/OrcamentoItemRow"
+import { OrcamentoConditionRow } from "@/components/orcamento/OrcamentoConditionRow"
+import {
+  calcularTotaisOrcamento,
+  calcularCondicaoPagamento,
+} from "@/lib/orcamentoCalculations"
 
 export function OrcamentoFormPage() {
   const { id } = useParams()
@@ -51,7 +61,7 @@ export function OrcamentoFormPage() {
     reset,
     formState: { errors },
   } = useForm<OrcamentoFormData>({
-    resolver: zodResolver(orcamentoSchema),
+    resolver: zodResolver(orcamentoSchema) as Resolver<OrcamentoFormData>,
     defaultValues: {
       clienteId: 0,
       descontoValor: 0,
@@ -117,31 +127,27 @@ export function OrcamentoFormPage() {
   const watchedDescontoValor = watch("descontoValor")
   const watchedConditions = watch("condicoesPagamento")
 
-  const subtotal = useMemo(() => {
-    return (watchedItens || []).reduce(
-      (sum, item) =>
-        sum + (item?.quantidade || 0) * (item?.precoUnitario || 0),
-      0,
-    )
-  }, [watchedItens])
-
-  const descontoEfetivo = useMemo(() => {
-    if (discountMode === "percentage") {
-      return subtotal * ((watchedDescontoPercentual || 0) / 100)
-    }
-    return Math.min(watchedDescontoValor || 0, subtotal)
-  }, [discountMode, subtotal, watchedDescontoPercentual, watchedDescontoValor])
-
-  const total = Math.max(0, subtotal - descontoEfetivo)
+  const { subtotal, descontoValor: descontoEfetivo, total } = useMemo(() => {
+    const items = (watchedItens || []).map((item) => ({
+      quantidade: item?.quantidade || 0,
+      precoUnitario: item?.precoUnitario || 0,
+    }))
+    const percParam = discountMode === "percentage" ? (watchedDescontoPercentual || 0) : 0
+    const valParam = discountMode === "value" ? Math.min(watchedDescontoValor || 0, items.reduce((s, i) => s + i.quantidade * i.precoUnitario, 0)) : 0
+    return calcularTotaisOrcamento(items, percParam, valParam)
+  }, [watchedItens, discountMode, watchedDescontoPercentual, watchedDescontoValor])
 
   const computedConditions = useMemo(() => {
-    return (watchedConditions || []).map((cond) => {
-      const desconto = cond?.descontoPercentual || 0
-      const condTotal = total * (1 - desconto / 100)
-      const parcelas = cond?.parcelas || 1
-      const condParcela = parcelas > 0 ? condTotal / parcelas : 0
-      return { valorTotal: condTotal, valorParcela: condParcela }
-    })
+    return (watchedConditions || []).map((cond) =>
+      calcularCondicaoPagamento(
+        {
+          formaPagamento: cond?.formaPagamento || "pix",
+          parcelas: cond?.parcelas || 1,
+          descontoPercentual: cond?.descontoPercentual || 0,
+        },
+        total,
+      ),
+    )
   }, [total, watchedConditions])
 
   async function onSubmit(data: OrcamentoFormData) {
@@ -272,111 +278,22 @@ export function OrcamentoFormPage() {
             </div>
           ) : (
             <div className="space-y-3">
-              {itemFields.map((field, index) => {
-                const itemSub =
-                  (watchedItens?.[index]?.quantidade || 0) *
-                  (watchedItens?.[index]?.precoUnitario || 0)
-                return (
-                  <div
-                    key={field.id}
-                    className="rounded-lg border bg-card p-4 space-y-3"
-                  >
-                    <div className="flex items-start justify-between">
-                      <span className="text-sm font-medium text-muted-foreground">
-                        Item {index + 1}
-                      </span>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-xs"
-                        onClick={() => removeItem(index)}
-                        className="text-destructive hover:text-destructive"
-                      >
-                        <Trash2 />
-                      </Button>
-                    </div>
-                    <div className="grid gap-3 sm:grid-cols-12">
-                      <div className="sm:col-span-5 space-y-1.5">
-                        <Label>Produto *</Label>
-                        <Controller
-                          control={control}
-                          name={`itens.${index}.produtoId`}
-                          render={({ field: f }) => (
-                            <Select
-                              value={f.value ? String(f.value) : ""}
-                              onValueChange={(v) => {
-                                const prodId = Number(v)
-                                f.onChange(prodId)
-                                const produto = produtos?.find(
-                                  (p) => p.id === prodId,
-                                )
-                                if (produto) {
-                                  setValue(
-                                    `itens.${index}.precoUnitario`,
-                                    produto.preco,
-                                  )
-                                }
-                              }}
-                            >
-                              <SelectTrigger className="w-full">
-                                <SelectValue placeholder="Selecione um produto" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {produtos?.map((p) => (
-                                  <SelectItem
-                                    key={p.id}
-                                    value={String(p.id!)}
-                                  >
-                                    {p.nome} — {formatCurrency(p.preco)}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          )}
-                        />
-                        {errors.itens?.[index]?.produtoId && (
-                          <p className="text-xs text-destructive">
-                            {errors.itens[index].produtoId.message}
-                          </p>
-                        )}
-                      </div>
-                      <div className="sm:col-span-2 space-y-1.5">
-                        <Label>Qtd *</Label>
-                        <Input
-                          type="number"
-                          min="1"
-                          {...register(`itens.${index}.quantidade`, {
-                            valueAsNumber: true,
-                          })}
-                          aria-invalid={!!errors.itens?.[index]?.quantidade}
-                        />
-                        {errors.itens?.[index]?.quantidade && (
-                          <p className="text-xs text-destructive">
-                            {errors.itens[index].quantidade.message}
-                          </p>
-                        )}
-                      </div>
-                      <div className="sm:col-span-3 space-y-1.5">
-                        <Label>Preço Unit. (R$)</Label>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          {...register(`itens.${index}.precoUnitario`, {
-                            valueAsNumber: true,
-                          })}
-                        />
-                      </div>
-                      <div className="sm:col-span-2 space-y-1.5">
-                        <Label>Subtotal</Label>
-                        <div className="h-9 flex items-center text-sm font-medium">
-                          {formatCurrency(itemSub)}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
+              {itemFields.map((field, index) => (
+                <OrcamentoItemRow
+                  key={field.id}
+                  index={index}
+                  control={control}
+                  register={register}
+                  errors={errors}
+                  setValue={setValue}
+                  produtos={produtos}
+                  itemSubtotal={
+                    (watchedItens?.[index]?.quantidade || 0) *
+                    (watchedItens?.[index]?.precoUnitario || 0)
+                  }
+                  onRemove={() => removeItem(index)}
+                />
+              ))}
             </div>
           )}
 
@@ -499,110 +416,17 @@ export function OrcamentoFormPage() {
               {condFields.map((field, index) => {
                 const computed = computedConditions[index]
                 return (
-                  <div
+                  <OrcamentoConditionRow
                     key={field.id}
-                    className="rounded-lg border bg-card p-4 space-y-3"
-                  >
-                    <div className="flex items-start justify-between">
-                      <span className="text-sm font-medium text-muted-foreground">
-                        Condição {index + 1}
-                      </span>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-xs"
-                        onClick={() => removeCond(index)}
-                        className="text-destructive hover:text-destructive"
-                      >
-                        <Trash2 />
-                      </Button>
-                    </div>
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <div className="space-y-1.5">
-                        <Label>Forma de Pagamento</Label>
-                        <Controller
-                          control={control}
-                          name={`condicoesPagamento.${index}.formaPagamento`}
-                          render={({ field: f }) => (
-                            <Select
-                              value={f.value}
-                              onValueChange={f.onChange}
-                            >
-                              <SelectTrigger className="w-full">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {FORMAS_PAGAMENTO.map((fp) => (
-                                  <SelectItem key={fp.value} value={fp.value}>
-                                    {fp.label}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          )}
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label>Parcelas</Label>
-                        <Input
-                          type="number"
-                          min="1"
-                          {...register(
-                            `condicoesPagamento.${index}.parcelas`,
-                            { valueAsNumber: true },
-                          )}
-                        />
-                        {errors.condicoesPagamento?.[index]?.parcelas && (
-                          <p className="text-xs text-destructive">
-                            {
-                              errors.condicoesPagamento[index].parcelas
-                                .message
-                            }
-                          </p>
-                        )}
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label>Desconto da condição (%)</Label>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          max="100"
-                          placeholder="0"
-                          {...register(
-                            `condicoesPagamento.${index}.descontoPercentual`,
-                            { valueAsNumber: true },
-                          )}
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label>Observações</Label>
-                        <Input
-                          placeholder="Ex: à vista com desconto"
-                          {...register(
-                            `condicoesPagamento.${index}.observacoes`,
-                          )}
-                        />
-                      </div>
-                    </div>
-                    <div className="flex flex-wrap gap-x-6 gap-y-1 rounded-md bg-muted/50 p-3 text-sm">
-                      <div>
-                        <span className="text-muted-foreground">Total: </span>
-                        <span className="font-medium">
-                          {formatCurrency(computed?.valorTotal ?? 0)}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">
-                          Parcela:{" "}
-                        </span>
-                        <span className="font-medium">
-                          {watchedConditions?.[index]?.parcelas || 1}x de{" "}
-                          {formatCurrency(computed?.valorParcela ?? 0)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
+                    index={index}
+                    control={control}
+                    register={register}
+                    errors={errors}
+                    parcelas={watchedConditions?.[index]?.parcelas || 1}
+                    computedTotal={computed?.valorTotal ?? 0}
+                    computedParcela={computed?.valorParcela ?? 0}
+                    onRemove={() => removeCond(index)}
+                  />
                 )
               })}
             </div>

@@ -33,17 +33,6 @@ export function formatCep(value: string): string {
   return digits.replace(/(\d{5})(\d{3})/, "$1-$2")
 }
 
-export const FORMA_PAGAMENTO_LABELS: Record<string, string> = {
-  dinheiro: "Dinheiro",
-  pix: "PIX",
-  cartao_credito: "Cartão de Crédito",
-  cartao_debito: "Cartão de Débito",
-  financiamento: "Financiamento",
-}
-
-export const STATUS_ORCAMENTO_LABELS: Record<string, string> = {
-  vigente: "Vigente",
-  expirado: "Expirado",
-  aprovado: "Aprovado",
-  cancelado: "Cancelado",
+export function formatNumeroOrcamento(n: number): string {
+  return `#${String(n).padStart(3, "0")}`
 }
