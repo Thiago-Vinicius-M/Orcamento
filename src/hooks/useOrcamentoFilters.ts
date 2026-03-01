@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { useSearchParams } from "react-router-dom"
-import { useLiveQuery } from "dexie-react-hooks"
+import { useQuery } from "@tanstack/react-query"
 import { orcamentoService, type OrcamentoListItem } from "@/services/orcamentoService"
 import type { StatusOrcamento } from "@/types"
 import { VALID_STATUS, type StatusFilter } from "@/lib/constants"
@@ -55,52 +55,59 @@ export function useOrcamentoFilters(): UseOrcamentoFiltersResult {
     setSearchParams(searchParams, { replace: true })
   }
 
-  const orcamentos = useLiveQuery(async () => {
-    const all = await orcamentoService.getAll()
-    let filtered = all
-
-    if (search.trim()) {
-      const lower = search.toLowerCase()
-      filtered = filtered.filter(
-        (o) =>
-          o.clienteNome.toLowerCase().includes(lower) ||
-          String(o.numero).includes(search.trim()),
-      )
-    }
-
-    if (statusFilter !== "todos") {
-      filtered = filtered.filter((o) => o.status === statusFilter)
-    }
-
-    if (dateFrom) {
-      const from = new Date(dateFrom + "T00:00:00")
-      filtered = filtered.filter(
-        (o) => new Date(o.dataEmissao) >= from,
-      )
-    }
-
-    if (dateTo) {
-      const to = new Date(dateTo + "T23:59:59")
-      filtered = filtered.filter(
-        (o) => new Date(o.dataEmissao) <= to,
-      )
-    }
-
-    return filtered
-  }, [search, statusFilter, dateFrom, dateTo])
-
-  const statusCounts = useLiveQuery(async () => {
-    const all = await orcamentoService.getAll()
-    const counts: Record<string, number> = {
-      todos: all.length,
-      vigente: 0,
-      expirado: 0,
-      aprovado: 0,
-      cancelado: 0,
-    }
-    for (const o of all) counts[o.status]++
-    return counts
+  const { data: allOrcamentos } = useQuery({
+    queryKey: ["orcamentos"],
+    queryFn: () => orcamentoService.getAll(),
   })
+
+  const orcamentos = allOrcamentos
+    ? (() => {
+        let filtered = allOrcamentos
+
+        if (search.trim()) {
+          const lower = search.toLowerCase()
+          filtered = filtered.filter(
+            (o) =>
+              o.clienteNome.toLowerCase().includes(lower) ||
+              String(o.numero).includes(search.trim()),
+          )
+        }
+
+        if (statusFilter !== "todos") {
+          filtered = filtered.filter((o) => o.status === statusFilter)
+        }
+
+        if (dateFrom) {
+          const from = new Date(dateFrom + "T00:00:00")
+          filtered = filtered.filter(
+            (o) => new Date(o.dataEmissao) >= from,
+          )
+        }
+
+        if (dateTo) {
+          const to = new Date(dateTo + "T23:59:59")
+          filtered = filtered.filter(
+            (o) => new Date(o.dataEmissao) <= to,
+          )
+        }
+
+        return filtered
+      })()
+    : undefined
+
+  const statusCounts = allOrcamentos
+    ? (() => {
+        const counts: Record<string, number> = {
+          todos: allOrcamentos.length,
+          vigente: 0,
+          expirado: 0,
+          aprovado: 0,
+          cancelado: 0,
+        }
+        for (const o of allOrcamentos) counts[o.status]++
+        return counts
+      })()
+    : undefined
 
   function clearFilters() {
     setSearch("")

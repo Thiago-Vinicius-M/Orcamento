@@ -7,8 +7,6 @@ import { OrcamentosListPage } from "@/pages/orcamentos/OrcamentosListPage"
 import { OrcamentoFormPage } from "@/pages/orcamentos/OrcamentoFormPage"
 import { OrcamentoViewPage } from "@/pages/orcamentos/OrcamentoViewPage"
 import { ConfiguracoesPage } from "@/pages/configuracoes/ConfiguracoesPage"
-import { PWAReloadPrompt } from "@/components/PWAReloadPrompt"
-import { PWAInstallPrompt } from "@/components/PWAInstallPrompt"
 import { Toaster } from "@/components/ui/sonner"
 
 function App() {
@@ -26,8 +24,6 @@ function App() {
           <Route path="/configuracoes" element={<ConfiguracoesPage />} />
         </Route>
       </Routes>
-      <PWAReloadPrompt />
-      <PWAInstallPrompt />
       <Toaster richColors position="bottom-right" />
     </BrowserRouter>
   )

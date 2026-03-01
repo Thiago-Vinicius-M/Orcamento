@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { useLiveQuery } from "dexie-react-hooks"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import {
   Search,
   Plus,
@@ -40,6 +40,7 @@ import type { Cliente } from "@/types"
 import type { ClienteFormData } from "@/schemas/cliente"
 
 export function ClientesPage() {
+  const queryClient = useQueryClient()
   const {
     search,
     setSearch,
@@ -55,12 +56,13 @@ export function ClientesPage() {
   } = useCrudPageState<Cliente>()
   const [expandedId, setExpandedId] = useState<number | null>(null)
 
-  const clientes = useLiveQuery(async () => {
-    if (search.trim()) {
-      return clienteService.search(search.trim())
-    }
-    return clienteService.getAll()
-  }, [search])
+  const { data: clientes } = useQuery({
+    queryKey: ["clientes", search],
+    queryFn: () =>
+      search.trim()
+        ? clienteService.search(search.trim())
+        : clienteService.getAll(),
+  })
 
   async function handleSubmit(data: ClienteFormData) {
     setSubmitting(true)
@@ -72,6 +74,7 @@ export function ClientesPage() {
         await clienteService.create(data)
         toast.success("Cliente cadastrado com sucesso!")
       }
+      await queryClient.invalidateQueries({ queryKey: ["clientes"] })
       closeForm()
     } catch {
       toast.error("Erro ao salvar cliente. Tente novamente.")
@@ -85,6 +88,7 @@ export function ClientesPage() {
     try {
       await clienteService.remove(deleting.id)
       toast.success("Cliente excluído com sucesso!")
+      await queryClient.invalidateQueries({ queryKey: ["clientes"] })
     } catch {
       toast.error("Erro ao excluir cliente. Tente novamente.")
     }

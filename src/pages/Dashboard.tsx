@@ -1,5 +1,5 @@
 import { useNavigate, Link } from "react-router-dom"
-import { useLiveQuery } from "dexie-react-hooks"
+import { useQuery } from "@tanstack/react-query"
 import {
   Plus,
   FileText,
@@ -16,7 +16,6 @@ import { EmptyState } from "@/components/EmptyState"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { db } from "@/db"
 import { dashboardService } from "@/services/dashboardService"
 import { formatCurrency, formatDate, formatNumeroOrcamento } from "@/lib/formatters"
 import { STATUS_STYLES, STATUS_CONFIG, STATUS_ORCAMENTO_LABELS } from "@/lib/constants"
@@ -25,11 +24,13 @@ import type { StatusOrcamento } from "@/types"
 export function Dashboard() {
   const navigate = useNavigate()
 
-  const clienteCount = useLiveQuery(() => db.clientes.count())
-  const produtoCount = useLiveQuery(() => db.produtos.count())
-  const dashboardStats = useLiveQuery(() =>
-    dashboardService.getStats(),
-  )
+  const { data: dashboardStats } = useQuery({
+    queryKey: ["dashboard-stats"],
+    queryFn: () => dashboardService.getStats(),
+  })
+
+  const clienteCount = dashboardStats?.clienteCount ?? 0
+  const produtoCount = dashboardStats?.produtoCount ?? 0
 
   const statusEntries: StatusOrcamento[] = [
     "vigente",
@@ -264,8 +265,8 @@ export function Dashboard() {
             <div>
               <p className="text-sm font-medium">Clientes</p>
               <p className="text-xs text-muted-foreground">
-                {clienteCount ?? 0} cadastrado
-                {(clienteCount ?? 0) !== 1 ? "s" : ""}
+                {clienteCount} cadastrado
+                {clienteCount !== 1 ? "s" : ""}
               </p>
             </div>
           </Link>
@@ -280,8 +281,8 @@ export function Dashboard() {
             <div>
               <p className="text-sm font-medium">Produtos</p>
               <p className="text-xs text-muted-foreground">
-                {produtoCount ?? 0} cadastrado
-                {(produtoCount ?? 0) !== 1 ? "s" : ""}
+                {produtoCount} cadastrado
+                {produtoCount !== 1 ? "s" : ""}
               </p>
             </div>
           </Link>

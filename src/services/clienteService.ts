@@ -1,26 +1,37 @@
-import { db } from "@/db"
+import { apiClient } from "@/api/client"
 import type { Cliente } from "@/types"
 import type { ClienteFormData } from "@/schemas/cliente"
-import { textIncludes } from "@/lib/searchUtils"
-import { createCrudService } from "./baseCrudService"
-
-const baseCrud = createCrudService<Cliente, ClienteFormData>({
-  table: db.clientes,
-  orderBy: "nome",
-})
 
 export const clienteService = {
-  ...baseCrud,
+  async getAll(): Promise<Cliente[]> {
+    return apiClient.get<Cliente[]>("/api/clientes")
+  },
+
+  async getById(id: number): Promise<Cliente | undefined> {
+    return apiClient.get<Cliente>(`/api/clientes/${id}`)
+  },
+
+  async create(data: ClienteFormData): Promise<number> {
+    const result = await apiClient.post<{ id: number }>("/api/clientes", data)
+    return result.id
+  },
+
+  async update(id: number, data: ClienteFormData): Promise<void> {
+    await apiClient.put(`/api/clientes/${id}`, data)
+  },
+
+  async remove(id: number): Promise<void> {
+    await apiClient.delete(`/api/clientes/${id}`)
+  },
+
+  async count(): Promise<number> {
+    const result = await apiClient.get<{ count: number }>("/api/clientes/count")
+    return result.count
+  },
 
   async search(query: string): Promise<Cliente[]> {
-    const digits = query.replace(/\D/g, "")
-
-    return db.clientes
-      .filter((c) => {
-        if (textIncludes(c.nome, query)) return true
-        if (digits && c.cpfCnpj.replace(/\D/g, "").includes(digits)) return true
-        return false
-      })
-      .toArray()
+    return apiClient.get<Cliente[]>(
+      `/api/clientes?search=${encodeURIComponent(query)}`,
+    )
   },
 }

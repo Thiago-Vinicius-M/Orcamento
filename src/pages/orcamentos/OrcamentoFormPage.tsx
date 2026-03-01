@@ -7,7 +7,7 @@ import {
   type Resolver,
 } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useLiveQuery } from "dexie-react-hooks"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { ArrowLeft, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { orcamentoSchema, type OrcamentoFormData } from "@/schemas/orcamento"
+import { ApiError } from "@/api/client"
 import { orcamentoService } from "@/services/orcamentoService"
 import { clienteService } from "@/services/clienteService"
 import { produtoService } from "@/services/produtoService"
@@ -38,6 +39,7 @@ import {
 export function OrcamentoFormPage() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const isEditing = !!id
 
   const [discountMode, setDiscountMode] = useState<"percentage" | "value">(
@@ -46,10 +48,17 @@ export function OrcamentoFormPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isLoading, setIsLoading] = useState(isEditing)
 
-  const clientes = useLiveQuery(() => clienteService.getAll())
-  const produtos = useLiveQuery(async () => {
-    const all = await produtoService.getAll()
-    return all.filter((p) => p.ativo)
+  const { data: clientes } = useQuery({
+    queryKey: ["clientes"],
+    queryFn: () => clienteService.getAll(),
+  })
+
+  const { data: produtos } = useQuery({
+    queryKey: ["produtos-ativos"],
+    queryFn: async () => {
+      const all = await produtoService.getAll()
+      return all.filter((p) => p.ativo)
+    },
   })
 
   const {
@@ -162,14 +171,18 @@ export function OrcamentoFormPage() {
       if (isEditing) {
         await orcamentoService.update(Number(id), data)
         toast.success("Orçamento atualizado com sucesso!")
+        await queryClient.invalidateQueries({ queryKey: ["orcamentos"] })
         navigate(`/orcamentos/${id}`)
       } else {
         const newId = await orcamentoService.create(data)
         toast.success("Orçamento criado com sucesso!")
+        await queryClient.invalidateQueries({ queryKey: ["orcamentos"] })
         navigate(`/orcamentos/${newId}`)
       }
-    } catch {
-      toast.error("Erro ao salvar orçamento. Tente novamente.")
+    } catch (err) {
+      const message =
+        err instanceof ApiError ? err.message : "Erro ao salvar orçamento. Tente novamente."
+      toast.error(message)
     } finally {
       setIsSubmitting(false)
     }

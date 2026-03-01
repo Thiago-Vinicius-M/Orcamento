@@ -1,50 +1,51 @@
-import { db } from "@/db"
+import { apiClient } from "@/api/client"
 import type { Produto } from "@/types"
 import type { ProdutoFormData } from "@/schemas/produto"
-import { textIncludes } from "@/lib/searchUtils"
-import { createCrudService } from "./baseCrudService"
-
-const transformData = (data: ProdutoFormData): Partial<Produto> => ({
-  ...data,
-  descricao: data.descricao ?? "",
-  imagem: data.imagem ?? "",
-})
-
-const baseCrud = createCrudService<Produto, ProdutoFormData>({
-  table: db.produtos,
-  orderBy: "nome",
-  transformData,
-})
 
 export const produtoService = {
-  ...baseCrud,
+  async getAll(): Promise<Produto[]> {
+    return apiClient.get<Produto[]>("/api/produtos")
+  },
+
+  async getById(id: number): Promise<Produto | undefined> {
+    return apiClient.get<Produto>(`/api/produtos/${id}`)
+  },
+
+  async create(data: ProdutoFormData): Promise<number> {
+    const result = await apiClient.post<{ id: number }>("/api/produtos", data)
+    return result.id
+  },
+
+  async update(id: number, data: ProdutoFormData): Promise<void> {
+    await apiClient.put(`/api/produtos/${id}`, data)
+  },
+
+  async remove(id: number): Promise<void> {
+    await apiClient.delete(`/api/produtos/${id}`)
+  },
+
+  async count(): Promise<number> {
+    const all = await this.getAll()
+    return all.length
+  },
 
   async search(query: string, categoria?: string): Promise<Produto[]> {
-    return db.produtos
-      .filter((p) => {
-        if (categoria && p.categoria !== categoria) return false
-        if (textIncludes(p.nome, query)) return true
-        if (textIncludes(p.codigoSku, query)) return true
-        return false
-      })
-      .toArray()
+    const params = new URLSearchParams({ search: query })
+    if (categoria) params.set("categoria", categoria)
+    return apiClient.get<Produto[]>(`/api/produtos?${params}`)
   },
 
   async getByCategory(categoria: string): Promise<Produto[]> {
-    return db.produtos.where("categoria").equals(categoria).sortBy("nome")
+    return apiClient.get<Produto[]>(
+      `/api/produtos?categoria=${encodeURIComponent(categoria)}`,
+    )
   },
 
   async toggleActive(id: number): Promise<void> {
-    const produto = await db.produtos.get(id)
-    if (!produto) return
-    await db.produtos.update(id, {
-      ativo: !produto.ativo,
-      updatedAt: new Date(),
-    })
+    await apiClient.patch(`/api/produtos/${id}/toggle-ativo`)
   },
 
   async getCategories(): Promise<string[]> {
-    const all = await db.produtos.orderBy("categoria").uniqueKeys()
-    return all as string[]
+    return apiClient.get<string[]>("/api/produtos/categorias")
   },
 }

@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { useLiveQuery } from "dexie-react-hooks"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import {
   Search,
   Plus,
@@ -48,6 +48,7 @@ import type { ProdutoFormData } from "@/schemas/produto"
 type StatusFilter = "todos" | "ativo" | "inativo"
 
 export function ProdutosPage() {
+  const queryClient = useQueryClient()
   const {
     search,
     setSearch,
@@ -63,28 +64,34 @@ export function ProdutosPage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("todos")
   const [toggling, setToggling] = useState<Produto | undefined>()
 
-  const categorias = useLiveQuery(() => produtoService.getCategories())
+  const { data: categorias } = useQuery({
+    queryKey: ["produto-categorias"],
+    queryFn: () => produtoService.getCategories(),
+  })
 
-  const produtos = useLiveQuery(async () => {
-    let results: Produto[]
+  const { data: produtos } = useQuery({
+    queryKey: ["produtos", search, categoriaFilter, statusFilter],
+    queryFn: async () => {
+      let results: Produto[]
 
-    if (search.trim()) {
-      const cat = categoriaFilter !== "todas" ? categoriaFilter : undefined
-      results = await produtoService.search(search.trim(), cat)
-    } else if (categoriaFilter !== "todas") {
-      results = await produtoService.getByCategory(categoriaFilter)
-    } else {
-      results = await produtoService.getAll()
-    }
+      if (search.trim()) {
+        const cat = categoriaFilter !== "todas" ? categoriaFilter : undefined
+        results = await produtoService.search(search.trim(), cat)
+      } else if (categoriaFilter !== "todas") {
+        results = await produtoService.getByCategory(categoriaFilter)
+      } else {
+        results = await produtoService.getAll()
+      }
 
-    if (statusFilter === "ativo") {
-      return results.filter((p) => p.ativo)
-    }
-    if (statusFilter === "inativo") {
-      return results.filter((p) => !p.ativo)
-    }
-    return results
-  }, [search, categoriaFilter, statusFilter])
+      if (statusFilter === "ativo") {
+        return results.filter((p) => p.ativo)
+      }
+      if (statusFilter === "inativo") {
+        return results.filter((p) => !p.ativo)
+      }
+      return results
+    },
+  })
 
   async function handleSubmit(data: ProdutoFormData) {
     setSubmitting(true)
@@ -96,6 +103,8 @@ export function ProdutosPage() {
         await produtoService.create(data)
         toast.success("Produto cadastrado com sucesso!")
       }
+      await queryClient.invalidateQueries({ queryKey: ["produtos"] })
+      await queryClient.invalidateQueries({ queryKey: ["produto-categorias"] })
       closeForm()
     } catch {
       toast.error("Erro ao salvar produto. Tente novamente.")
@@ -111,6 +120,7 @@ export function ProdutosPage() {
       toast.success(
         toggling.ativo ? "Produto desativado." : "Produto reativado.",
       )
+      await queryClient.invalidateQueries({ queryKey: ["produtos"] })
     } catch {
       toast.error("Erro ao alterar status do produto.")
     }

@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
-import { useLiveQuery } from "dexie-react-hooks"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import {
   ArrowLeft,
   Pencil,
@@ -50,6 +50,7 @@ import type { StatusOrcamento } from "@/types"
 export function OrcamentoViewPage() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const [statusAction, setStatusAction] = useState<StatusOrcamento | null>(
     null,
   )
@@ -59,10 +60,11 @@ export function OrcamentoViewPage() {
     handleGeneratePdf,
   } = useOrcamentoActions()
 
-  const data = useLiveQuery(async () => {
-    if (!id) return null
-    return (await orcamentoService.getByIdWithDetails(Number(id))) ?? null
-  }, [id])
+  const { data, isLoading } = useQuery({
+    queryKey: ["orcamento", id],
+    queryFn: () => orcamentoService.getByIdWithDetails(Number(id)),
+    enabled: !!id,
+  })
 
   async function handleStatusChange() {
     if (!statusAction || !id) return
@@ -73,17 +75,19 @@ export function OrcamentoViewPage() {
           ? "Orçamento aprovado com sucesso!"
           : "Orçamento cancelado.",
       )
+      await queryClient.invalidateQueries({ queryKey: ["orcamento", id] })
+      await queryClient.invalidateQueries({ queryKey: ["orcamentos"] })
     } catch {
       toast.error("Erro ao alterar status do orçamento.")
     }
     setStatusAction(null)
   }
 
-  if (data === undefined) {
+  if (isLoading) {
     return <LoadingState />
   }
 
-  if (data === null) {
+  if (!data) {
     return (
       <div className="rounded-lg border bg-card p-12 text-center">
         <h3 className="text-lg font-semibold">Orçamento não encontrado</h3>
