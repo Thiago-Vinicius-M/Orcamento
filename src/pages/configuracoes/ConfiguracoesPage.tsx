@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react"
-import { useForm, type SubmitHandler, type Resolver } from "react-hook-form"
+import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { lojaSchema, type LojaFormData } from "@/schemas/loja"
 import { lojaService } from "@/services/lojaService"
@@ -29,7 +29,8 @@ export function ConfiguracoesPage() {
     setValue,
     formState: { errors },
   } = useForm<LojaFormData>({
-    resolver: zodResolver(lojaSchema) as Resolver<LojaFormData>,
+    // Cast para simplificar integração de tipos entre Zod e React Hook Form
+    resolver: zodResolver(lojaSchema) as any,
     defaultValues: {
       nome: "",
       cnpj: "",
@@ -76,7 +77,7 @@ export function ConfiguracoesPage() {
     }
   }
 
-  const onSubmit: SubmitHandler<LojaFormData> = async (data) => {
+  const onSubmit = async (data: LojaFormData) => {
     setIsSubmitting(true)
     try {
       await lojaService.save(data)
