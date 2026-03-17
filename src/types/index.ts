@@ -83,3 +83,23 @@ export interface CondicaoPagamento {
   descontoPercentual: number
   observacoes: string
 }
+
+export interface Empresa {
+  id: number
+  nome: string
+  cnpj: string
+  endereco: string
+  telefone: string
+  email: string
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface Usuario {
+  id: number
+  email: string
+  nome: string
+  empresaId: number
+  createdAt: Date
+  updatedAt: Date
+}

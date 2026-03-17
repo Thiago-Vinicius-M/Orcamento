@@ -5,8 +5,16 @@ import {
   clienteInvalido,
   clienteComNome,
 } from "../fixtures/test-data"
+import { LoginPage } from "../pages/LoginPage"
 
 test.describe("Clientes", () => {
+  test.beforeEach(async ({ page }) => {
+    const loginPage = new LoginPage(page)
+    await loginPage.goto()
+    await loginPage.login("e2e.teste@orcamento.local", "playwright123")
+    await loginPage.assertLoggedIn()
+  })
+
   test("criar cliente com dados válidos", async ({ page }) => {
     const clientesPage = new ClientesPage(page)
     const nome = `Cliente E2E ${Date.now()}`

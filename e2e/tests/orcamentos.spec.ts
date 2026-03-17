@@ -5,8 +5,16 @@ import { OrcamentosListPage } from "../pages/OrcamentosListPage"
 import { OrcamentoFormPage } from "../pages/OrcamentoFormPage"
 import { OrcamentoViewPage } from "../pages/OrcamentoViewPage"
 import { clienteComNome, produtoComNome } from "../fixtures/test-data"
+import { LoginPage } from "../pages/LoginPage"
 
 test.describe("Orçamentos", () => {
+  test.beforeEach(async ({ page }) => {
+    const loginPage = new LoginPage(page)
+    await loginPage.goto()
+    await loginPage.login("e2e.teste@orcamento.local", "playwright123")
+    await loginPage.assertLoggedIn()
+  })
+
   test("fluxo completo: criar cliente, produto e orçamento", async ({ page }) => {
     const nomeCliente = `Orc Cliente ${Date.now()}`
     const nomeProduto = `Orc Produto ${Date.now()}`

@@ -1,4 +1,4 @@
-import { NavLink, Outlet } from "react-router-dom"
+import { NavLink, Outlet, useNavigate } from "react-router-dom"
 import {
   Users,
   Package,
@@ -6,6 +6,8 @@ import {
   Settings,
   LayoutDashboard,
 } from "lucide-react"
+import { useAuth } from "@/context/AuthContext"
+import { Button } from "@/components/ui/button"
 
 const navItems = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -16,6 +18,14 @@ const navItems = [
 ]
 
 export function Layout() {
+  const navigate = useNavigate()
+  const { logout } = useAuth()
+
+  function handleLogout() {
+    logout()
+    navigate("/login", { replace: true })
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-50 border-b-2 border-border/80 bg-card/95 backdrop-blur supports-backdrop-filter:bg-card/80 shadow-sm">
@@ -42,6 +52,17 @@ export function Layout() {
               </NavLink>
             ))}
           </nav>
+
+          <div className="ml-auto">
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+              onClick={handleLogout}
+            >
+              Sair
+            </Button>
+          </div>
         </div>
       </header>
 

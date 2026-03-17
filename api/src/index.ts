@@ -1,10 +1,13 @@
+import "dotenv/config"
 import express from "express"
 import cors from "cors"
 import lojaRoutes from "./routes/loja.js"
+import authRoutes from "./routes/auth.js"
 import clienteRoutes from "./routes/clientes.js"
 import produtoRoutes from "./routes/produtos.js"
 import orcamentoRoutes from "./routes/orcamentos.js"
 import dashboardRoutes from "./routes/dashboard.js"
+import { authMiddleware } from "./middleware/auth.js"
 
 const app = express()
 const PORT = process.env.PORT ?? 3001
@@ -12,11 +15,12 @@ const PORT = process.env.PORT ?? 3001
 app.use(cors())
 app.use(express.json({ limit: "10mb" }))
 
-app.use("/api/loja", lojaRoutes)
-app.use("/api/clientes", clienteRoutes)
-app.use("/api/produtos", produtoRoutes)
-app.use("/api/orcamentos", orcamentoRoutes)
-app.use("/api/dashboard", dashboardRoutes)
+app.use("/api/auth", authRoutes)
+app.use("/api/loja", authMiddleware, lojaRoutes)
+app.use("/api/clientes", authMiddleware, clienteRoutes)
+app.use("/api/produtos", authMiddleware, produtoRoutes)
+app.use("/api/orcamentos", authMiddleware, orcamentoRoutes)
+app.use("/api/dashboard", authMiddleware, dashboardRoutes)
 
 app.use(
   (

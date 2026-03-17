@@ -2,8 +2,16 @@ import { test, expect } from "@playwright/test"
 import { ClientesPage } from "../pages/ClientesPage"
 import { ProdutosPage } from "../pages/ProdutosPage"
 import { OrcamentosListPage } from "../pages/OrcamentosListPage"
+import { LoginPage } from "../pages/LoginPage"
 
 test.describe("Empty state e navegação", () => {
+  test.beforeEach(async ({ page }) => {
+    const loginPage = new LoginPage(page)
+    await loginPage.goto()
+    await loginPage.login("e2e.teste@orcamento.local", "playwright123")
+    await loginPage.assertLoggedIn()
+  })
+
   test("navegação: menu Clientes", async ({ page }) => {
     await page.goto("/")
     await page.getByRole("link", { name: "Clientes", exact: true }).first().click()

@@ -9,7 +9,8 @@ export function formatDate(date: Date): string {
   return new Intl.DateTimeFormat("pt-BR").format(date)
 }
 
-export function formatCpfCnpj(value: string): string {
+export function formatCpfCnpj(value?: string | null): string {
+  if (!value) return ""
   const digits = value.replace(/\D/g, "")
   if (digits.length <= 11) {
     return digits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4")

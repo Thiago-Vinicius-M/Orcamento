@@ -5,8 +5,16 @@ import {
   produtoInvalido,
   produtoComNome,
 } from "../fixtures/test-data"
+import { LoginPage } from "../pages/LoginPage"
 
 test.describe("Produtos", () => {
+  test.beforeEach(async ({ page }) => {
+    const loginPage = new LoginPage(page)
+    await loginPage.goto()
+    await loginPage.login("e2e.teste@orcamento.local", "playwright123")
+    await loginPage.assertLoggedIn()
+  })
+
   test("criar produto com dados válidos", async ({ page }) => {
     const produtosPage = new ProdutosPage(page)
     const nome = `Produto E2E ${Date.now()}`

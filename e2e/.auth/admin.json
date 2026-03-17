@@ -1,0 +1,22 @@
+{
+  "cookies": [],
+  "origins": [
+    {
+      "origin": "http://localhost:5173",
+      "localStorage": [
+        {
+          "name": "authEmpresa",
+          "value": "{\"id\":6,\"nome\":\"Empresa Teste\",\"cnpj\":\"00.000.000/0001-00\",\"email\":\"contato+teste@orcamento.local\",\"telefone\":\"(11) 0000-0000\",\"endereco\":\"Endereço de Teste, 123\"}"
+        },
+        {
+          "name": "authToken",
+          "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQsImVtcHJlc2FJZCI6NiwiZW1haWwiOiJlMmUudGVzdGVAb3JjYW1lbnRvLmxvY2FsIiwiaWF0IjoxNzczNjk2NzMyLCJleHAiOjE3NzQzMDE1MzJ9.5ATF4GIEN771GYhmWGRF_bmzdmKocC8XsWQyV097Va8"
+        },
+        {
+          "name": "authUser",
+          "value": "{\"id\":4,\"email\":\"e2e.teste@orcamento.local\",\"nome\":\"Usuário Teste E2E\",\"empresaId\":6}"
+        }
+      ]
+    }
+  ]
+}
