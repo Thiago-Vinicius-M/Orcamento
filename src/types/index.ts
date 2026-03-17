@@ -91,8 +91,8 @@ export interface Empresa {
   endereco: string
   telefone: string
   email: string
-  createdAt: Date
-  updatedAt: Date
+  createdAt?: Date
+  updatedAt?: Date
 }
 
 export interface Usuario {
@@ -100,6 +100,6 @@ export interface Usuario {
   email: string
   nome: string
   empresaId: number
-  createdAt: Date
-  updatedAt: Date
+  createdAt?: Date
+  updatedAt?: Date
 }

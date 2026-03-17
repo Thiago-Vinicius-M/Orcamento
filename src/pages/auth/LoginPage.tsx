@@ -6,12 +6,13 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useAuth } from "@/context/AuthContext"
+import type { Usuario, Empresa } from "@/types"
 import { setAuthRedirectPath, consumeAuthRedirectPath } from "@/lib/auth"
 
 interface LoginResponse {
   token: string
-  usuario: { id: number; email: string; nome: string; empresaId: number }
-  empresa: { id: number; nome: string; cnpj: string; email: string; telefone: string; endereco: string } | null
+  usuario: Usuario
+  empresa: Empresa | null
 }
 
 export function LoginPage() {

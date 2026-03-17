@@ -25,6 +25,28 @@ Aplicação para criação e gestão de orçamentos, com cadastro de clientes e 
   - JWT para autenticação (link mágico)
   - Nodemailer para envio de e-mails
 
+## Deploy e estratégia de hospedagem
+
+- **Plataforma**: Vercel.
+- **Arquitetura**:
+  - O **frontend** (Vite/React) é publicado como uma SPA estática na Vercel.
+  - A **API** Express é exposta como **funções serverless** sob o prefixo `/api` no mesmo projeto da Vercel.
+- **Integração front/API**:
+  - Em produção na Vercel, o frontend acessa a API usando `VITE_API_BASE_URL=/api`.
+  - O cliente HTTP central (`src/api/client.ts`) monta as URLs a partir dessa base, chamando endpoints como `/api/auth`, `/api/clientes`, `/api/produtos`, etc., no mesmo domínio.
+  - Isso elimina problemas de CORS em produção, já que front e API compartilham o mesmo host.
+- **Estratégia para a API**:
+  - A lógica atual da API está em `api/src/index.ts`, usando Express com rotas agrupadas (`/api/auth`, `/api/clientes`, `/api/produtos`, `/api/orcamentos`, `/api/dashboard`).
+  - Para rodar na Vercel, essa mesma configuração de rotas será reaproveitada em um **handler serverless** (por exemplo, um arquivo `api/src/serverless.ts`) que monta o `express()` e exporta o handler esperado pela Vercel.
+  - Em ambiente serverless **não é usado `app.listen`**; em vez disso, a Vercel chama diretamente o handler exportado.
+- **Configuração de rotas na Vercel** (alto nível):
+  - As rotas que começam com `/api` serão encaminhadas para o handler serverless da API (por exemplo, via `vercel.json` com rewrites para `/api/(.*)`).
+  - Todas as demais rotas (do React Router) serão servidas pela SPA, apontando para o `index.html` gerado pelo Vite.
+- **Ambientes e variáveis**:
+  - As variáveis de ambiente já usadas pela API (por exemplo, `DATABASE_URL`/configurações do Supabase, `JWT_SECRET`, config de e-mail) devem ser cadastradas na Vercel, respeitando cada ambiente (Development/Preview/Production).
+  - No frontend, em produção, definir `VITE_API_BASE_URL=/api` nas Environment Variables do projeto Vercel.
+  - Em desenvolvimento local, permanece a estratégia atual: Vite dev server em `http://localhost:5173` falando com a API em `http://localhost:3001` (via `VITE_API_BASE_URL`/proxy).
+
 ## Desenvolvimento
 
 ### Frontend
