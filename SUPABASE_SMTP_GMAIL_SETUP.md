@@ -1,0 +1,51 @@
+## Setup SMTP Gmail (App Password) no Supabase
+
+Este guia corresponde ao to-do `setup-smtp-gmail` do seu plano.
+
+### 1) Criar uma App Password no Gmail
+1. No Google, crie uma **App Password** (recomendado) para o usuário Gmail que você vai usar no Supabase.
+2. **Use a App Password** no lugar da senha normal.
+
+### 2) Configurar o provedor no Supabase Dashboard
+1. Abra o **Supabase Dashboard** do seu projeto.
+2. Vá em **Authentication** -> **Providers**.
+3. Selecione o provedor **Email (SMTP)**.
+4. Preencha os campos com os valores do Gmail:
+   - `Host`: `smtp.gmail.com`
+   - `Username`: seu e-mail Gmail (por ex. `seuemail@gmail.com`)
+   - `Password`: a **App Password** gerada no passo anterior
+   - `From address` (ou similar): mantenha o mesmo e-mail do `Username`
+
+5. Escolha as opções de porta/segurança (use somente um conjunto):
+   - Opção A (SSL direto):
+     - `Port`: `465`
+     - `Secure/SSL`: `true` (TLS/SSL ligado)
+   - Opção B (STARTTLS):
+     - `Port`: `587`
+     - `Secure/SSL`: `false` e `StartTLS`: `true` (se existir)
+
+6. Clique em **Save** (salvar).
+
+### 3) Testar envio no Dashboard
+1. Ainda na tela do provedor **Email (SMTP)**, clique em **Send test email** (ou botão equivalente).
+2. Informe um e-mail externo (ex.: outro Gmail/Outlook) para evitar dúvidas.
+3. Verifique:
+   - Caixa de entrada
+   - Spam / Lixo
+   - Se o e-mail não chegar, aguarde alguns minutos e tente novamente.
+
+### 4) Teste via fluxo do app (opcional, mas recomendado)
+1. Faça signup do gerente no app (rota `LoginGerentePage`).
+2. Verifique se o link de confirmação chega.
+3. Se o link chegar e confirmar, o provedor SMTP está funcionando de ponta a ponta.
+
+### 5) Se der erro (check rápido)
+- Autenticação falhou (`535`, `auth failed`): App Password incorreta.
+- Erro de TLS/STARTTLS:
+  - Se aparecer algo como “Must issue a STARTTLS command first”, tente o conjunto da **Opção A (465 + SSL)**.
+  - Se aparecer “SSL required”, tente a **Opção A**.
+- Não chega nenhum e-mail:
+  - confira spam/lixo
+  - confirme que o `From address` corresponde ao Gmail configurado
+  - tente alternar entre porta `465` e `587`
+

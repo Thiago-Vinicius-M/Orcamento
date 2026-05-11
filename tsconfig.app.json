@@ -1,9 +1,15 @@
 {
   "compilerOptions": {
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+<<<<<<< HEAD
     "target": "ES2022",
     "useDefineForClassFields": true,
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
+=======
+    "target": "ES2023",
+    "useDefineForClassFields": true,
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+>>>>>>> 310ef08 (deploy)
     "module": "ESNext",
     "types": ["vite/client"],
     "skipLibCheck": true,
@@ -16,19 +22,31 @@
     "noEmit": true,
     "jsx": "react-jsx",
 
+<<<<<<< HEAD
     /* Path aliases */
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
     },
 
+=======
+>>>>>>> 310ef08 (deploy)
     /* Linting */
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true,
+<<<<<<< HEAD
     "noUncheckedSideEffectImports": true
+=======
+    "noUncheckedSideEffectImports": true,
+
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    }
+>>>>>>> 310ef08 (deploy)
   },
   "include": ["src"]
 }

@@ -3,6 +3,7 @@
   "references": [
     { "path": "./tsconfig.app.json" },
     { "path": "./tsconfig.node.json" }
+<<<<<<< HEAD
   ],
   "compilerOptions": {
     "baseUrl": ".",
@@ -10,4 +11,7 @@
       "@/*": ["./src/*"]
     }
   }
+=======
+  ]
+>>>>>>> 310ef08 (deploy)
 }

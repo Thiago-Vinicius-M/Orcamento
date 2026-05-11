@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import type { LucideIcon } from "lucide-react"
 import type { ReactNode } from "react"
 
@@ -28,4 +29,12 @@ export function EmptyState({
       {action && <div className="mt-4">{action}</div>}
     </div>
   )
+=======
+type EmptyStateProps = {
+  message: string
+}
+
+export function EmptyState({ message }: EmptyStateProps) {
+  return <div className="card-body-muted">{message}</div>
+>>>>>>> 310ef08 (deploy)
 }

@@ -1,0 +1,10 @@
+# Cadastro de gerente chama a função sem JWT (usuário ainda não está logado).
+[functions.register-gerente]
+verify_jwt = false
+
+[functions.login-vendedor]
+verify_jwt = false
+
+# JWT verificado no gateway; `getUser(jwt)` na função permanece como segunda camada.
+[functions.create-vendedor]
+verify_jwt = true

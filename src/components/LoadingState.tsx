@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { Loader2 } from "lucide-react"
 
 interface LoadingStateProps {
@@ -13,4 +14,12 @@ export function LoadingState({ message = "Carregando..." }: LoadingStateProps) {
       </div>
     </div>
   )
+=======
+type LoadingStateProps = {
+  message?: string
+}
+
+export function LoadingState({ message = 'Carregando...' }: LoadingStateProps) {
+  return <div className="card-body-muted">{message}</div>
+>>>>>>> 310ef08 (deploy)
 }
