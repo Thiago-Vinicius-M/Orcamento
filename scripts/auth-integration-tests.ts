@@ -85,8 +85,6 @@ async function main() {
   })
 
   const runId = randomUUID().slice(0, 8)
-  const loginCodeA = `T${runId.toUpperCase()}A`
-  const loginCodeB = `T${runId.toUpperCase()}B`
 
   const gerenteEmailA = `gerente.a.${runId}@example.com`
   const gerenteEmailB = `gerente.b.${runId}@example.com`
@@ -98,22 +96,59 @@ async function main() {
   const createdCompanyIds: string[] = []
   const checks: CheckResult[] = []
 
+  const createCompanyViaRpc = async (razaoSocial: string) => {
+    const { data, error } = await admin
+      .rpc('create_company_with_next_login_code', {
+        _razao_social: razaoSocial,
+        _cnpj: null,
+      })
+      .single()
+    if (error) {
+      throw new Error(
+        `Falha ao alocar empresa via RPC create_company_with_next_login_code: ${error.message}`,
+      )
+    }
+    const allocation = data as { company_id: string; login_code: string } | null
+    if (!allocation?.company_id || !allocation.login_code) {
+      throw new Error('Falha ao alocar empresa via RPC: retorno sem company_id/login_code')
+    }
+    return { id: allocation.company_id, login_code: allocation.login_code }
+  }
+
   try {
-    const { data: companyA, error: companyAError } = await admin
-      .from('companies')
-      .insert({ razao_social: `Empresa Teste A ${runId}`, login_code: loginCodeA })
-      .select('id, login_code')
-      .single()
-    if (companyAError) throw companyAError
+    // Aloca login_codes sequenciais via RPC (mesmo caminho do register-gerente),
+    // validando que tres alocacoes consecutivas produzem inteiros sequenciais
+    // (1, 2, 3 em base zerada; N, N+1, N+2 caso ja existam empresas).
+    const companyA = await createCompanyViaRpc(`Empresa Teste A ${runId}`)
+    const companyB = await createCompanyViaRpc(`Empresa Teste B ${runId}`)
+    const companyC = await createCompanyViaRpc(`Empresa Teste C ${runId}`)
+    const loginCodeA = companyA.login_code
+    const loginCodeB = companyB.login_code
+    const loginCodeC = companyC.login_code
 
-    const { data: companyB, error: companyBError } = await admin
-      .from('companies')
-      .insert({ razao_social: `Empresa Teste B ${runId}`, login_code: loginCodeB })
-      .select('id, login_code')
-      .single()
-    if (companyBError) throw companyBError
+    createdCompanyIds.push(companyA.id, companyB.id, companyC.id)
 
-    createdCompanyIds.push(companyA.id, companyB.id)
+    const codeAInt = Number.parseInt(loginCodeA, 10)
+    const codeBInt = Number.parseInt(loginCodeB, 10)
+    const codeCInt = Number.parseInt(loginCodeC, 10)
+    ensure(
+      Number.isInteger(codeAInt) && codeAInt >= 1 && String(codeAInt) === loginCodeA,
+      `login_code A deve ser inteiro >= 1, recebido ${JSON.stringify(loginCodeA)}`,
+    )
+    ensure(
+      codeBInt === codeAInt + 1 && String(codeBInt) === loginCodeB,
+      `login_code B (${loginCodeB}) deve ser sequencial apos A (${loginCodeA}); esperado ${codeAInt + 1}`,
+    )
+    ensure(
+      codeCInt === codeBInt + 1 && String(codeCInt) === loginCodeC,
+      `login_code C (${loginCodeC}) deve ser sequencial apos B (${loginCodeB}); esperado ${codeBInt + 1}`,
+    )
+    checks.push({
+      id: 'companies-login-code-sequencia-1-2-3',
+      description:
+        'RPC create_company_with_next_login_code aloca login_codes sequenciais (1, 2, 3 em DB zerado)',
+      ok: true,
+    })
 
     const { data: gerenteA, error: gerenteAError } = await admin.auth.admin.createUser({
       email: gerenteEmailA,

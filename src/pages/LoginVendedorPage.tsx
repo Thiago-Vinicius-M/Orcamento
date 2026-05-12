@@ -6,6 +6,8 @@ import { setPreferredLogin } from '../auth/preferredLogin'
 import { ensureSupabase, getFunctionsErrorMessage } from '../auth/authFlow'
 import { useAuthFlow } from '../auth/useAuthFlow'
 
+const NUMERIC_LOGIN_CODE_PATTERN = /^\d+$/
+
 export function LoginVendedorPage() {
   const navigate = useNavigate()
   const { loading, error, setError, clearError, run } = useAuthFlow(
@@ -22,8 +24,15 @@ export function LoginVendedorPage() {
     event.preventDefault()
     clearError()
 
-    if (!form.loginCode || !form.username || !form.password) {
+    const loginCode = form.loginCode.trim()
+
+    if (!loginCode || !form.username || !form.password) {
       setError('Preencha todos os campos.')
+      return
+    }
+
+    if (!NUMERIC_LOGIN_CODE_PATTERN.test(loginCode)) {
+      setError('O código da empresa deve conter apenas números.')
       return
     }
 
@@ -39,7 +48,7 @@ export function LoginVendedorPage() {
         refresh_token: string
       }>('login-vendedor', {
         body: {
-          company_code: form.loginCode,
+          company_code: loginCode,
           username: form.username,
           password: form.password,
         },
@@ -101,10 +110,17 @@ export function LoginVendedorPage() {
             <input
               id="login_code"
               type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              placeholder="Ex.: 1"
               value={form.loginCode}
-              onChange={(e) => setForm((prev) => ({ ...prev, loginCode: e.target.value }))}
+              onChange={(e) => {
+                const digitsOnly = e.target.value.replace(/\D/g, '')
+                setForm((prev) => ({ ...prev, loginCode: digitsOnly }))
+              }}
               required
             />
+            <small className="form-help">Use apenas números.</small>
           </div>
 
           <div className="form-row">

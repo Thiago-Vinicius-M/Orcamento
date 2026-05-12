@@ -22,8 +22,8 @@ const main = async () => {
   const SUPABASE_ACCESS_TOKEN = requiredEnv('SUPABASE_ACCESS_TOKEN')
 
   const SMTP_HOST = requiredEnv('SMTP_HOST')
-  const SMTP_PORT_STR = requiredEnv('SMTP_PORT')
-  const SMTP_PORT = Number(requiredEnv('SMTP_PORT_STR'))
+  const SMTP_PORT_RAW = requiredEnv('SMTP_PORT')
+  const SMTP_PORT_NUM = Number(SMTP_PORT_RAW)
   const SMTP_USERNAME = requiredEnv('SMTP_USERNAME')
   const SMTP_APP_PASSWORD = requiredEnv('SMTP_APP_PASSWORD')
   const SMTP_FROM_ADDRESS = requiredEnv('SMTP_FROM_ADDRESS')
@@ -33,9 +33,12 @@ const main = async () => {
   const TEST_EMAIL_REDIRECT_TO = process.env.TEST_EMAIL_REDIRECT_TO ?? 'http://localhost:5173/configuracoes'
   const SKIP_SIGNUP_TEST = (process.env.SKIP_SIGNUP_TEST ?? '').toLowerCase() === 'true'
 
-  if (!Number.isFinite(SMTP_PORT) || SMTP_PORT <= 0) {
-    throw new Error(`Invalid SMTP_PORT: ${process.env.SMTP_PORT}`)
+  if (!Number.isFinite(SMTP_PORT_NUM) || SMTP_PORT_NUM <= 0 || !Number.isInteger(SMTP_PORT_NUM)) {
+    throw new Error(`Invalid SMTP_PORT: ${SMTP_PORT_RAW}`)
   }
+  // A Mgmt API espera smtp_port como string (ex: "587"), mas validamos o valor
+  // numericamente para evitar enviar lixo. Mantemos a forma canônica string.
+  const SMTP_PORT = String(SMTP_PORT_NUM)
 
   const projectRef = getProjectRefFromSupabaseUrl(SUPABASE_URL)
 
@@ -50,8 +53,7 @@ const main = async () => {
     mailer_autoconfirm: false,
     smtp_admin_email: SMTP_FROM_ADDRESS,
     smtp_host: SMTP_HOST,
-    smtp_port_str: SMTP_PORT_STR,
-    smtp_port: SMTP_PORT_STR,
+    smtp_port: SMTP_PORT,
     smtp_user: SMTP_USERNAME,
     smtp_pass: SMTP_APP_PASSWORD,
     smtp_sender_name: SMTP_SENDER_NAME,

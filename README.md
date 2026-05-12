@@ -1,110 +1,3 @@
-<<<<<<< HEAD
-# Orçamento
-
-Aplicação para criação e gestão de orçamentos, com cadastro de clientes e produtos.
-
-## Funcionalidades
-
-- **Dashboard** — visão geral e atalhos.
-- **Clientes** — CRUD de clientes (nome, CPF/CNPJ, contato).
-- **Produtos** — CRUD de produtos com categorias.
-- **Orçamentos** — criar, editar, visualizar e duplicar orçamentos; itens, descontos e condições de pagamento; geração de PDF.
-- **Configurações** — dados da loja (para cabeçalho do PDF).
-
-## Stack
-
-- **Frontend**
-  - React 19, TypeScript, Vite
-  - React Router, React Hook Form, Zod
-  - Tailwind CSS, Radix UI (shadcn)
-  - jsPDF (exportação em PDF)
-  - PWA (instalável, offline)
-
-- **Backend (API)**
-  - Node.js, Express
-  - Prisma (PostgreSQL/SQLite)
-  - JWT para autenticação (link mágico)
-  - Nodemailer para envio de e-mails
-
-## Deploy e estratégia de hospedagem
-
-- **Plataforma**: Vercel.
-- **Arquitetura**:
-  - O **frontend** (Vite/React) é publicado como uma SPA estática na Vercel.
-  - A **API** Express é exposta como **funções serverless** sob o prefixo `/api` no mesmo projeto da Vercel.
-- **Integração front/API**:
-  - Em produção na Vercel, o frontend acessa a API usando `VITE_API_BASE_URL=/api`.
-  - O cliente HTTP central (`src/api/client.ts`) monta as URLs a partir dessa base, chamando endpoints como `/api/auth`, `/api/clientes`, `/api/produtos`, etc., no mesmo domínio.
-  - Isso elimina problemas de CORS em produção, já que front e API compartilham o mesmo host.
-- **Estratégia para a API**:
-  - A lógica atual da API está em `api/src/index.ts`, usando Express com rotas agrupadas (`/api/auth`, `/api/clientes`, `/api/produtos`, `/api/orcamentos`, `/api/dashboard`).
-  - Para rodar na Vercel, essa mesma configuração de rotas será reaproveitada em um **handler serverless** (por exemplo, um arquivo `api/src/serverless.ts`) que monta o `express()` e exporta o handler esperado pela Vercel.
-  - Em ambiente serverless **não é usado `app.listen`**; em vez disso, a Vercel chama diretamente o handler exportado.
-- **Configuração de rotas na Vercel** (alto nível):
-  - As rotas que começam com `/api` serão encaminhadas para o handler serverless da API (por exemplo, via `vercel.json` com rewrites para `/api/(.*)`).
-  - Todas as demais rotas (do React Router) serão servidas pela SPA, apontando para o `index.html` gerado pelo Vite.
-- **Ambientes e variáveis**:
-  - As variáveis de ambiente já usadas pela API (por exemplo, `DATABASE_URL`/configurações do Supabase, `JWT_SECRET`, config de e-mail) devem ser cadastradas na Vercel, respeitando cada ambiente (Development/Preview/Production).
-  - No frontend, em produção, definir `VITE_API_BASE_URL=/api` nas Environment Variables do projeto Vercel.
-  - Em desenvolvimento local, permanece a estratégia atual: Vite dev server em `http://localhost:5173` falando com a API em `http://localhost:3001` (via `VITE_API_BASE_URL`/proxy).
-
-## Desenvolvimento
-
-### Frontend
-
-```bash
-npm install
-npm run dev
-```
-
-Build: `npm run build`
-
-### Backend (API)
-
-Em outro terminal:
-
-```bash
-cd api
-npm install
-npm run dev
-```
-
-A API sobe por padrão em `http://localhost:3001` e o frontend em `http://localhost:5173`.
-
-### Banco de dados (Supabase)
-
-Antes de rodar o backend em um ambiente novo, é necessário preparar o banco de dados no Supabase:
-
-1. Crie um projeto no Supabase (se ainda não existir).
-2. No painel do Supabase, copie a URL e a chave anônima (anon key) e configure as variáveis de ambiente conforme o `.env.example` na pasta `api/`.
-3. No painel do Supabase, abra o **SQL Editor** do projeto.
-4. Copie o conteúdo do arquivo `api/prisma/supabase-schema.sql` deste repositório e cole em uma nova query.
-5. Execute o script completo para criar as tabelas (`empresas`, `usuarios`, `lojas`, `clientes`, `produtos`, `orcamentos`, etc) **e o usuário/empresa de teste**.
-
-   - Empresa de teste: `Empresa de Teste E2E` (CNPJ `00.000.000/0001-00`)
-   - Usuário de teste: `e2e.teste@orcamento.local`
-   - Senha de teste: `playwright123`
-
-Sem esse passo, a API não conseguirá acessar as tabelas esperadas (por exemplo, `public.usuarios`) e retornará erros ao tentar cadastrar usuários e outros registros.
-
-### Variáveis de ambiente da API
-
-No diretório `api/` existe um arquivo `.env.example` com todas as variáveis necessárias. Para configurar:
-
-```bash
-cd api
-cp .env.example .env
-# Edite o arquivo .env com os valores reais
-```
-
-Principais variáveis:
-
-- `APP_URL` — URL do frontend usada para gerar o link mágico (ex.: `http://localhost:5173` em desenvolvimento).
-- `JWT_SECRET` — chave secreta usada para assinar o token JWT.
-- `EMAIL_FROM` — remetente dos e-mails (ex.: `"Seu Nome <no-reply@suaempresa.com>"`).
-- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` — dados do servidor SMTP.
-- `NODE_ENV` — use `production` em produção para que a API exija configuração de e-mail antes de enviar.
-=======
 # NewOrca — Sistema de Orçamentos
 
 Aplicação web para gestão de orçamentos (clientes, produtos, orçamentos e geração de PDF) usando **React + Vite** no frontend e **Supabase (Postgres + Auth + Edge Functions)** como backend principal. O repositório também inclui um **servidor Node/Fastify** opcional para geração de PDF (porta `3333`), mas o fluxo atual do app gera PDF **no cliente**.
@@ -267,7 +160,7 @@ O app depende de:
 - **Edge Functions**:
   - `register-gerente` (cadastro do gerente + empresa/perfil)
   - `create-vendedor` (gerente cria vendedor)
-  - `login-vendedor` (login com código da empresa + usuário + senha)
+  - `login-vendedor` (login com código da empresa + usuário + senha — o código da empresa é uma string numérica sequencial, ex.: `1`, `2`, `3`, ...)
   - `resolve-vendedor-email` (legado; responde **410 Gone** sem dados sensíveis — não usar em fluxos novos)
 
 ### Opção A — Usar Supabase remoto (Dashboard)
@@ -305,6 +198,19 @@ npx supabase functions deploy create-vendedor
 npx supabase functions deploy login-vendedor
 npx supabase functions deploy resolve-vendedor-email
 ```
+
+Como atalho, há o script `npm run supabase:deploy:functions`, que faz o deploy das quatro functions em uma única chamada.
+
+> **Pré-requisito do atalho:** o CLI infere o `--project-ref` a partir do projeto **linkado** (`supabase/.temp/project-ref`). Antes da primeira execução, rode:
+>
+> ```powershell
+> npx supabase login
+> npx supabase link --project-ref "<seu_project_ref>"
+> ```
+>
+> Em ambientes CI/headless, defina também `SUPABASE_ACCESS_TOKEN` (Personal Access Token gerado em <https://supabase.com/dashboard/account/tokens>) — sem ele, o CLI responde **401 Unauthorized** ao chamar a Management API.
+>
+> Não usamos `--project-ref $SUPABASE_PROJECT_REF` no script porque é sintaxe **bash** e o `$VAR` não expande em PowerShell, o que faz o CLI receber a string literal e devolver 401/400.
 
 #### 5) Configurar redirect URLs (confirmação de e-mail)
 
@@ -395,7 +301,7 @@ curl http://localhost:3333/health
 - [ ] Edge Functions deployadas (ou servidas localmente)
 - [ ] Redirect URLs configuradas para o `emailRedirectTo` do signup
 - [ ] App abre em `http://localhost:5173`
-- [ ] Cadastro de gerente cria conta e retorna `login_code` (ou chega e-mail de confirmação)
+- [ ] Cadastro de gerente cria conta e retorna `login_code` numérico sequencial (`1`, `2`, `3`, ...) ou chega e-mail de confirmação
 - [ ] Login (gerente ou vendedor) funciona
 - [ ] CRUD de clientes/produtos funciona (conforme permissões)
 - [ ] Geração de PDF funciona (download no browser)
@@ -444,13 +350,21 @@ npm run test:integration:auth
 
 - O app tenta extrair detalhes de `error.context` (ver `src/auth/authFlow.ts`). Confira o console do navegador e logs da Edge Function no Dashboard.
 
+### 6) `supabase functions deploy` (ou `db push`) retorna `401 Unauthorized`
+
+- **Causa**: o CLI fala com a Management API e exige Personal Access Token. Ou nunca foi feito `supabase login` nesta máquina, ou o token expirou, ou em CI/headless `SUPABASE_ACCESS_TOKEN` não está exportado.
+- **Como resolver**:
+  - Em máquina de dev: `npx supabase login` (abre o browser) → valide com `npx supabase projects list` (precisa listar projetos).
+  - Em CI/headless: gere um PAT em <https://supabase.com/dashboard/account/tokens>, exporte como `SUPABASE_ACCESS_TOKEN` e rode `npx supabase projects list` antes do deploy para confirmar.
+  - Passo a passo completo (incluindo limpeza de token velho e exemplo de GitHub Actions): seção **“0) Pré-requisito — autenticação da CLI”** em `DEPLOY.md`.
+
 ## Arquitetura do Projeto (alto nível)
 
 ### Fluxo principal
 
 1) **Frontend** (React) autentica via Supabase:
-   - gerente: cadastro via Edge Function `register-gerente` e login padrão (email/senha)
-   - vendedor: login via Edge Function `login-vendedor` (código da empresa + usuário + senha), depois `supabase.auth.setSession(...)`
+   - gerente: cadastro via Edge Function `register-gerente` e login padrão (email/senha). O cadastro retorna `login_code` numérico sequencial (`1`, `2`, `3`, ...) gerado pelo banco (`bigint generated always as identity` → `companies.login_code text`).
+   - vendedor: login via Edge Function `login-vendedor` (código da empresa + usuário + senha), depois `supabase.auth.setSession(...)`. O código da empresa é a string numérica sequencial recebida no cadastro do gerente.
 2) **Autorização**: políticas RLS no Postgres garantem isolamento por `company_id` e regras por `role`.
 3) **Dados**: CRUD e consultas via `repositories/` usando Supabase JS.
 4) **PDF**: atualmente gerado no cliente usando `pdf-lib` com dados carregados do Supabase.
@@ -487,4 +401,3 @@ Não há `Dockerfile`/`docker-compose.yml` no repositório neste momento.
   - roda `npm ci`
   - roda `supabase link`/`db push` (quando aplicável)
   - deploya functions e seta secrets
->>>>>>> 310ef08 (deploy)

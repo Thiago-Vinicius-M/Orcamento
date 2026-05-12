@@ -1,55 +1,10 @@
-<<<<<<< HEAD
-# Dependências
-node_modules/
-api/node_modules/
-
-# Builds / artefatos gerados
-dist/
-build/
-api/dist/
-api/build/
-
-# Cobertura de testes
-coverage/
-api/coverage/
-
-# Logs
-=======
 # Logs
 logs
->>>>>>> 310ef08 (deploy)
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
-<<<<<<< HEAD
-
-# Arquivos de ambiente (NUNCA subir credenciais)
-.env
-.env.local
-.env.*.local
-api/.env
-api/.env.local
-api/.env.*.local
-
-# Caches de ferramentas
-.eslintcache
-.turbo/
-.cache/
-api/.eslintcache
-
-# Arquivos temporários do TypeScript
-*.tsbuildinfo
-
-# Configurações locais de IDE (opcional ignorar se quiser compartilhar)
-.vscode/
-.idea/
-
-# Arquivos específicos de SO
-.DS_Store
-Thumbs.db
-=======
 lerna-debug.log*
 
 node_modules
@@ -72,4 +27,3 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
->>>>>>> 310ef08 (deploy)

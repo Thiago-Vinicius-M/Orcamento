@@ -60,15 +60,17 @@ await supabase.auth.signInWithPassword({
 
 ```json
 {
-  "company_code": "NEWORCA01",
+  "company_code": "1",
   "username": "joao.vendas",
   "password": "SenhaForte123"
 }
 ```
 
+> **Formato do `company_code`:** string numerica sequencial (`"1"`, `"2"`, `"3"`, ...) gerada pelo banco via coluna `companies.login_code` (derivada de `bigint generated always as identity`). O cliente envia o valor exatamente como recebido no cadastro do gerente — sem zero-padding, sem prefixo. A validacao no frontend (`LoginVendedorPage`) aceita apenas digitos (`^\d+$`).
+
 ### Validacoes obrigatorias
 
-1. `company_code` deve mapear para empresa ativa.
+1. `company_code` deve mapear para empresa ativa (string numerica que existe em `companies.login_code`).
 2. `username` deve existir na empresa informada.
 3. `password` deve ser validada contra credencial persistida.
 4. Usuario deve estar ativo.

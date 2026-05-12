@@ -1,3 +1,27 @@
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
+
+function loadDotEnvFallback() {
+  const envPath = resolve(process.cwd(), '.env')
+  let contents = ''
+  try {
+    contents = readFileSync(envPath, 'utf8')
+  } catch {
+    return
+  }
+  for (const line of contents.split(/\r?\n/)) {
+    const trimmed = line.trim()
+    if (!trimmed || trimmed.startsWith('#')) continue
+    const sep = trimmed.indexOf('=')
+    if (sep <= 0) continue
+    const key = trimmed.slice(0, sep).trim()
+    const value = trimmed.slice(sep + 1).trim()
+    if (key && !(key in process.env)) {
+      process.env[key] = value
+    }
+  }
+}
+
 const requiredEnv = (name: string): string => {
   const v = process.env[name]
   if (!v) throw new Error(`Missing env var: ${name}`)
@@ -23,6 +47,7 @@ const DEFAULT_CONFIRMATION_CONTENT = [
 ].join('\n')
 
 const main = async () => {
+  loadDotEnvFallback()
   const SUPABASE_URL = requiredEnv('SUPABASE_URL')
   const SUPABASE_ACCESS_TOKEN = requiredEnv('SUPABASE_ACCESS_TOKEN')
 
