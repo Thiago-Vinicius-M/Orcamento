@@ -1,7 +1,5 @@
 import { test, expect } from "@playwright/test"
 import { ClientesPage } from "../pages/ClientesPage"
-import { ProdutosPage } from "../pages/ProdutosPage"
-import { OrcamentosListPage } from "../pages/OrcamentosListPage"
 import { LoginPage } from "../pages/LoginPage"
 
 test.describe("Empty state e navegação", () => {

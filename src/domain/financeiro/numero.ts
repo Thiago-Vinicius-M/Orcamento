@@ -1,5 +1,7 @@
+import { Money } from './money'
+
 export function parseDecimalInput(value: string): number {
-  return Number(value.replace(',', '.')) || 0
+  return Money.fromBRLString(value).toNumber()
 }
 
 export function parseNullableDecimalInput(value: string): number | null {
@@ -7,5 +9,10 @@ export function parseNullableDecimalInput(value: string): number | null {
     return null
   }
 
-  return Number(value.replace(',', '.')) || null
+  const n = Money.fromBRLString(value).toNumber()
+  if (n === 0) {
+    return null
+  }
+
+  return n
 }

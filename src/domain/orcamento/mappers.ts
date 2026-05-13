@@ -1,7 +1,50 @@
+import { normalizeCreatedByName, normalizeCreatedByUserId } from '../../mappers/orcamento'
 import { isOrcamentoStatus, type OrcamentoStatus } from './status'
 
 type ClienteRaw = {
   nome?: unknown
+}
+
+function narrowClienteRaw(value: unknown): ClienteRaw {
+  if (value === null || typeof value !== 'object') {
+    return {}
+  }
+  const o = value as Record<string, unknown>
+  return 'nome' in o ? { nome: o.nome } : {}
+}
+
+function narrowClientesField(value: unknown): OrcamentoRawRow['clientes'] {
+  if (value === null) {
+    return null
+  }
+  if (value === undefined) {
+    return undefined
+  }
+  if (Array.isArray(value)) {
+    return value.map(narrowClienteRaw)
+  }
+  if (typeof value === 'object') {
+    return narrowClienteRaw(value)
+  }
+  return undefined
+}
+
+/** Linha vinda do PostgREST/Supabase: extrai só chaves conhecidas, sem afirmar shape completo. */
+export function narrowOrcamentoRawRow(row: unknown): OrcamentoRawRow {
+  if (row === null || typeof row !== 'object') {
+    return {}
+  }
+  const o = row as Record<string, unknown>
+  return {
+    id: o.id,
+    status: o.status,
+    created_at: o.created_at,
+    validade_ate: o.validade_ate,
+    total: o.total,
+    clientes: narrowClientesField(o.clientes),
+    created_by_user_id: o.created_by_user_id,
+    created_by_name: o.created_by_name,
+  }
 }
 
 export type OrcamentoRawRow = {
@@ -19,27 +62,12 @@ export type OrcamentoListRow = {
   id: string
   status: OrcamentoStatus
   created_at: string
+  validade_ate: string
   total: number
   cliente_nome: string
   created_by_user_id: string | null
   created_by_name: string | null
   gerado_por_nome: string
-}
-
-function normalizeCreatedByUserId(value: unknown): string | null {
-  if (value === null || value === undefined) {
-    return null
-  }
-  const text = String(value).trim()
-  return text === '' ? null : text
-}
-
-function normalizeCreatedByName(value: unknown): string | null {
-  if (typeof value !== 'string') {
-    return null
-  }
-  const trimmed = value.trim()
-  return trimmed === '' ? null : trimmed
 }
 
 export function toOrcamentoListRow(
@@ -58,6 +86,7 @@ export function toOrcamentoListRow(
     id: typeof row.id === 'string' ? row.id : '',
     status: isOrcamentoStatus(row.status) ? row.status : fallbackStatus,
     created_at: typeof row.created_at === 'string' ? row.created_at : '',
+    validade_ate: typeof row.validade_ate === 'string' ? row.validade_ate : '',
     total: Number(row.total ?? 0),
     cliente_nome: clienteNome,
     created_by_user_id: createdByUserId,

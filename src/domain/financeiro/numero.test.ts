@@ -14,6 +14,10 @@ describe('parseDecimalInput', () => {
     expect(parseDecimalInput('12,5')).toBe(12.5)
   })
 
+  it('parses milhares pt-BR (ponto + vírgula)', () => {
+    expect(parseDecimalInput('1.234,56')).toBe(1234.56)
+  })
+
   it('returns 0 for empty string', () => {
     expect(parseDecimalInput('')).toBe(0)
   })

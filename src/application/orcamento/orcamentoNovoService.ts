@@ -1,13 +1,20 @@
+import { fetchCurrentRole } from '../../auth/fetchCurrentRole'
 import { parseDecimalInput, parseNullableDecimalInput } from '../../domain/financeiro/numero'
 import type { OrcamentoTotais } from '../../domain/orcamento/calculos'
 import { calcularSubtotalItem } from '../../domain/orcamento/calculos'
 import {
-  getOrcamentoContext,
+  descontoVendedorExcedeTeto,
+  mensagemValorMaximoDescontoVendedor,
+} from '../../domain/orcamento/descontoVendedor'
+import { getDefaultSupabase } from '../../lib/supabaseClient'
+import { getCompanySettingsRow } from '../../repositories/companySettingsRepository'
+import { getOrcamentoContextWithClient } from '../../repositories/orcamento/orcamentoContextProvider'
+import { nextOrcamentoNumeroPdf } from '../../repositories/orcamento/orcamentoNumeracaoService'
+import {
   insertOrcamento,
   insertOrcamentoItens,
   insertOrcamentoPagamento,
-  nextOrcamentoNumeroPdf,
-} from '../../repositories/orcamentoSupabaseRepository'
+} from '../../repositories/orcamento/orcamentoWriteRepo'
 
 export type PagamentoTipo = 'dinheiro' | 'debito' | 'credito' | 'pix' | 'boleto' | 'financiamento'
 
@@ -52,7 +59,24 @@ export async function criarOrcamento(input: CriarOrcamentoInput): Promise<string
     throw new Error('Adicione pelo menos um item com produto e quantidade.')
   }
 
-  const { company_id, vendedor_id } = await getOrcamentoContext()
+  const supabase = getDefaultSupabase()
+  const [{ company_id, vendedor_id }, roleResult, companyRow] = await Promise.all([
+    getOrcamentoContextWithClient(supabase),
+    fetchCurrentRole(supabase),
+    getCompanySettingsRow(),
+  ])
+
+  if (!roleResult.ok) {
+    throw new Error(roleResult.message)
+  }
+
+  const teto = companyRow.max_desconto_vendedor_percentual
+  if (roleResult.role === 'vendedor' && teto !== null) {
+    if (descontoVendedorExcedeTeto(input.totais.subtotal, input.totais.desconto_total, teto)) {
+      throw new Error(mensagemValorMaximoDescontoVendedor(teto))
+    }
+  }
+
   const numero_pdf = await nextOrcamentoNumeroPdf()
 
   const descontoTipo = input.desconto.tipo || null

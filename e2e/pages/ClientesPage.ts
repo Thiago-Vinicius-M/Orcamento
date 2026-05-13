@@ -54,7 +54,7 @@ export class ClientesPage {
   }
 
   async buscar(texto: string) {
-    await this.page.getByPlaceholder("Buscar por nome ou CPF/CNPJ...").fill(texto)
+    await this.page.getByLabel("Buscar clientes por nome ou documento").fill(texto)
     await this.page.waitForTimeout(300)
   }
 

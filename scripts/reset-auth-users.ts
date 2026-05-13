@@ -71,6 +71,7 @@ async function main() {
     }
 
     if (users.length < perPage) break
+    page += 1
   }
 
   console.log(`[reset-auth-users] total apagados: ${totalDeleted}`)

@@ -1,16 +1,15 @@
-import { useCallback, useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
+import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
+import { matchesSearch } from '../lib/searchNormalize'
+import { useAuthSession } from '../auth/useAuthSession'
+import { formatCurrencyBRL } from '../domain/financeiro/moeda'
 import { supabaseConfigured, SUPABASE_NOT_CONFIGURED_MESSAGE } from '../lib/supabaseClient'
 import { useCrudFormState } from '../hooks/useCrudFormState'
+import { useCrudResource } from '../hooks/useCrudResource'
 import { PageHeader, StatusPill, LoadingState, EmptyState, DataTable, FormField, type Column } from '../components'
 import type { Produto, ProdutoPayload } from '../repositories/produtoRepository'
-import {
-  listProdutos as repoListProdutos,
-  createProduto,
-  updateProduto,
-  deleteProduto,
-} from '../repositories/produtoRepository'
+import { produtoRepo } from '../repositories/produtoRepository'
 
 type FormState = {
   id?: string
@@ -22,10 +21,36 @@ type FormState = {
 }
 
 export function ProdutosPage() {
-  const [produtos, setProdutos] = useState<Produto[]>([])
-  const [loading, setLoading] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const { role } = useAuthSession()
+  const readOnly = role === 'vendedor'
+
+  const {
+    items: produtos,
+    loading,
+    saving,
+    error,
+    setError,
+    create,
+    update,
+    remove,
+  } = useCrudResource(produtoRepo, {
+    isConfigured: () => supabaseConfigured,
+    notConfiguredMessage: SUPABASE_NOT_CONFIGURED_MESSAGE,
+    loadErrorFallback: 'Erro ao carregar produtos.',
+    sortItems: (a, b) => a.nome.localeCompare(b.nome, 'pt-BR'),
+  })
+
+  const [filtroBusca, setFiltroBusca] = useState('')
+
+  const produtosFiltrados = useMemo(
+    () =>
+      produtos.filter(
+        (p) =>
+          matchesSearch(p.nome, filtroBusca) || matchesSearch(p.codigo, filtroBusca),
+      ),
+    [produtos, filtroBusca],
+  )
+
   const { showForm, setShowForm, form, setForm, isEdit, closeForm, handleNovo } =
     useCrudFormState<FormState>(() => ({
       codigo: '',
@@ -34,33 +59,6 @@ export function ProdutosPage() {
       preco_unitario: '',
       ativo: true,
     }))
-
-  const carregarProdutos = useCallback(async () => {
-    setLoading(true)
-    setError(null)
-
-    if (!supabaseConfigured) {
-      setError(SUPABASE_NOT_CONFIGURED_MESSAGE)
-      setLoading(false)
-      return
-    }
-
-    try {
-      const data = await repoListProdutos()
-      setProdutos(data)
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Erro ao carregar produtos.')
-    }
-
-    setLoading(false)
-  }, [])
-
-  useEffect(() => {
-    const timeout = window.setTimeout(() => {
-      void carregarProdutos()
-    }, 0)
-    return () => window.clearTimeout(timeout)
-  }, [carregarProdutos])
 
   function handleEdit(produto: Produto) {
     setForm({
@@ -80,23 +78,16 @@ export function ProdutosPage() {
     )
     if (!confirmar) return
 
-    setSaving(true)
-    setError(null)
-
     try {
-      await deleteProduto(produto.id)
-      setProdutos((prev) => prev.filter((p) => p.id !== produto.id))
+      await remove(produto.id)
       if (form.id === produto.id) {
         closeForm()
       }
       toast.success(`Produto "${produto.nome}" excluído com sucesso.`)
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Falha ao excluir produto.'
-      setError(msg)
       toast.error(msg)
     }
-
-    setSaving(false)
   }
 
   async function handleSubmit(event: FormEvent) {
@@ -117,9 +108,6 @@ export function ProdutosPage() {
       return
     }
 
-    setSaving(true)
-    setError(null)
-
     const payload: ProdutoPayload = {
       codigo: form.codigo.trim(),
       nome: form.nome.trim(),
@@ -130,29 +118,25 @@ export function ProdutosPage() {
 
     try {
       if (isEdit && form.id) {
-        const updated = await updateProduto(form.id, payload)
-        setProdutos((prev) => prev.map((p) => (p.id === updated.id ? updated : p)))
+        await update(form.id, payload)
         closeForm()
         toast.success('Produto atualizado com sucesso.')
       } else {
-        const created = await createProduto(payload)
-        setProdutos((prev) => [...prev, created])
+        await create(payload)
         closeForm()
         toast.success('Produto criado com sucesso.')
       }
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Falha ao salvar produto.'
-      setError(msg)
       toast.error(msg)
     }
-
-    setSaving(false)
   }
 
   const produtoColumns: Column<Produto>[] = [
     { header: 'Código', accessor: (p) => p.codigo },
     {
       header: 'Nome',
+      cellClassName: 'table-cell-wrap',
       accessor: (p) => (
         <div className="stack-vertical">
           <span>{p.nome}</span>
@@ -160,7 +144,7 @@ export function ProdutosPage() {
         </div>
       ),
     },
-    { header: 'Preço', accessor: (p) => `R$ ${p.preco_unitario.toFixed(2)}` },
+    { header: 'Preço', accessor: (p) => formatCurrencyBRL(p.preco_unitario) },
     {
       header: 'Status',
       accessor: (p) => (
@@ -169,38 +153,51 @@ export function ProdutosPage() {
         </StatusPill>
       ),
     },
-    {
-      header: 'Ações',
-      shrink: true,
-      accessor: (p) => (
-        <div className="table-actions">
-          <button type="button" className="btn-link" onClick={() => handleEdit(p)} aria-label={`Editar produto ${p.nome}`}>
-            Editar
-          </button>
-          <button
-            type="button"
-            className="btn-link-danger"
-            onClick={() => void handleDelete(p)}
-            disabled={saving}
-            aria-label={`Excluir produto ${p.nome}`}
-          >
-            Excluir
-          </button>
-        </div>
-      ),
-    },
+    ...(readOnly
+      ? []
+      : [
+          {
+            header: 'Ações',
+            shrink: true,
+            accessor: (p: Produto) => (
+              <div className="table-actions">
+                <button
+                  type="button"
+                  className="btn-link"
+                  onClick={() => handleEdit(p)}
+                  aria-label={`Editar produto ${p.nome}`}
+                >
+                  Editar
+                </button>
+                <button
+                  type="button"
+                  className="btn-link-danger"
+                  onClick={() => void handleDelete(p)}
+                  disabled={saving}
+                  aria-label={`Excluir produto ${p.nome}`}
+                >
+                  Excluir
+                </button>
+              </div>
+            ),
+          } satisfies Column<Produto>,
+        ]),
   ]
 
   return (
     <>
       <PageHeader
         title="Produtos"
-        subtitle="Catálogo de produtos da empresa. Apenas gerentes podem criar e editar produtos."
+        subtitle={
+          readOnly
+            ? 'Catálogo de produtos da empresa. Apenas o gerente pode alterar produtos.'
+            : 'Catálogo de produtos da empresa. Apenas gerentes podem criar e editar produtos.'
+        }
         error={error}
       />
 
       <div className="page-grid">
-        {showForm && (
+        {!readOnly && showForm && (
           <section className="card">
             <header className="card-header">
               <h2>{isEdit ? 'Editar produto' : 'Novo produto'}</h2>
@@ -259,9 +256,7 @@ export function ProdutosPage() {
                   <input
                     type="checkbox"
                     checked={form.ativo}
-                    onChange={(e) =>
-                      setForm((prev) => ({ ...prev, ativo: e.target.checked }))
-                    }
+                    onChange={(e) => setForm((prev) => ({ ...prev, ativo: e.target.checked }))}
                   />
                   Produto ativo
                 </label>
@@ -277,11 +272,7 @@ export function ProdutosPage() {
                   {isEdit ? 'Cancelar edição' : 'Cancelar'}
                 </button>
                 <button type="submit" className="btn-primary" disabled={saving}>
-                  {saving
-                    ? 'Salvando...'
-                    : isEdit
-                      ? 'Salvar alterações'
-                      : 'Criar produto'}
+                  {saving ? 'Salvando...' : isEdit ? 'Salvar alterações' : 'Criar produto'}
                 </button>
               </div>
             </form>
@@ -291,24 +282,52 @@ export function ProdutosPage() {
         <section className="card">
           <header className="card-header card-header-row">
             <h2>Lista de produtos</h2>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <button
-                type="button"
-                className="btn-primary"
-                onClick={handleNovo}
-              >
-                Novo
-              </button>
-              <span className="badge">{produtos.length}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+              {!readOnly && (
+                <button type="button" className="btn-primary" onClick={handleNovo}>
+                  Novo
+                </button>
+              )}
+              <span className="badge">{produtosFiltrados.length}</span>
+              {filtroBusca.trim() && produtos.length > 0 ? (
+                <span className="text-sm text-muted">de {produtos.length}</span>
+              ) : null}
             </div>
           </header>
 
           {loading ? (
             <LoadingState message="Carregando produtos..." />
           ) : produtos.length === 0 ? (
-            <EmptyState message='Nenhum produto cadastrado ainda. Clique em "Novo" para adicionar o primeiro.' />
+            <EmptyState
+              message={
+                readOnly
+                  ? 'Nenhum produto cadastrado.'
+                  : 'Nenhum produto cadastrado ainda. Clique em "Novo" para adicionar o primeiro.'
+              }
+            />
           ) : (
-            <DataTable columns={produtoColumns} data={produtos} rowKey={(p) => p.id} />
+            <>
+              <div className="filters-bar" style={{ marginBottom: '1rem' }}>
+                <div className="form-row">
+                  <label htmlFor="produtos-busca">Buscar</label>
+                  <input
+                    id="produtos-busca"
+                    type="search"
+                    className="input-control"
+                    value={filtroBusca}
+                    onChange={(e) => setFiltroBusca(e.target.value)}
+                    placeholder="Buscar por nome ou código/SKU..."
+                    aria-label="Buscar produtos por nome ou código"
+                  />
+                </div>
+              </div>
+
+              {produtosFiltrados.length === 0 ? (
+                <EmptyState message="Nenhum produto encontrado para esta busca. Ajuste o termo ou limpe o filtro." />
+              ) : (
+                <DataTable columns={produtoColumns} data={produtosFiltrados} rowKey={(p) => p.id} />
+              )}
+            </>
           )}
         </section>
       </div>

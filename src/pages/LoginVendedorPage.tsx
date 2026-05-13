@@ -3,13 +3,15 @@ import type { FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { fetchCurrentRole } from '../auth/fetchCurrentRole'
 import { setPreferredLogin } from '../auth/preferredLogin'
-import { ensureSupabase, getFunctionsErrorMessage } from '../auth/authFlow'
+import { parseFunctionsError } from '../lib/errors'
+import { useSupabase } from '../lib/useSupabase'
 import { useAuthFlow } from '../auth/useAuthFlow'
 
 const NUMERIC_LOGIN_CODE_PATTERN = /^\d+$/
 
 export function LoginVendedorPage() {
   const navigate = useNavigate()
+  const supaStatus = useSupabase()
   const { loading, error, setError, clearError, run } = useAuthFlow(
     'Erro inesperado ao fazer login.',
   )
@@ -36,11 +38,11 @@ export function LoginVendedorPage() {
       return
     }
 
-    const { client: supabaseClient, error: configError } = ensureSupabase()
-    if (!supabaseClient) {
-      setError(configError)
+    if (supaStatus.kind !== 'ready') {
+      setError(supaStatus.message)
       return
     }
+    const supabaseClient = supaStatus.client
 
     await run(async () => {
       const { data, error: fnError } = await supabaseClient.functions.invoke<{
@@ -55,7 +57,7 @@ export function LoginVendedorPage() {
       })
 
       if (fnError) {
-        const detail = await getFunctionsErrorMessage(fnError)
+        const detail = await parseFunctionsError(fnError)
         setError(detail ?? fnError.message)
         return
       }

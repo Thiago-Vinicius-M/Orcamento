@@ -3,40 +3,39 @@ import { expect, type Page } from "@playwright/test"
 export class OrcamentoFormPage {
   constructor(private readonly page: Page) {}
 
+  /** Combobox do cliente (label “Cliente *” no cabeçalho “Dados principais”). */
   async selecionarCliente(nomeCliente: string) {
-    await this.page.getByRole("combobox").first().click()
+    await this.page.getByRole("combobox", { name: /Cliente/i }).click()
     await this.page.getByRole("option", { name: new RegExp(nomeCliente, "i") }).click()
   }
 
   async adicionarItem() {
-    await this.page.getByRole("button", { name: "Adicionar Item" }).click()
+    await this.page.getByRole("button", { name: /Adicionar item/i }).click()
   }
 
+  /**
+   * Linha da tabela “Itens do orçamento”: produto (SearchableSelect) + quantidade (coluna “Qtd.”).
+   * Preço unitário é somente leitura — não há segundo `spinbutton` na linha.
+   */
   async preencherItem(index: number, nomeProduto: string, quantidade: number) {
-    const card = this.page.getByText(`Item ${index + 1}`).locator("../..")
-    await card.getByRole("combobox").first().click()
+    const row = this.page.locator(".table tbody tr").nth(index)
+    await row.getByRole("combobox").click()
     await this.page.getByRole("option", { name: new RegExp(nomeProduto, "i") }).click()
-    await card.getByRole("spinbutton").first().fill(String(quantidade))
+    await row.locator("td").nth(1).locator('input[type="number"]').fill(String(quantidade))
   }
 
-  async adicionarCondicao() {
-    await this.page.getByRole("button", { name: /Adicionar/ }).last().click()
-  }
-
-  async preencherCondicao(index: number, formaPagamento: string, parcelas: number) {
-    const card = this.page.getByText(`Condição ${index + 1}`).locator("../..")
-    await card.getByRole("combobox").first().click()
-    await this.page.getByRole("option", { name: formaPagamento }).click()
-    await card.getByRole("spinbutton").first().fill(String(parcelas))
+  /** `<select id="pag_tipo">` — sem botão “Adicionar condição”; Pix não exige parcelas. */
+  async selecionarTipoPagamento(label: string) {
+    await this.page.getByLabel("Tipo de pagamento").selectOption({ label })
   }
 
   async definirDescontoPercentual(valor: number) {
-    await this.page.getByRole("radio", { name: "Percentual (%)" }).click()
+    await this.page.getByLabel("Tipo de desconto").selectOption({ label: "Percentual (%)" })
     await this.page.getByLabel("Desconto (%)").fill(String(valor))
   }
 
   async definirDescontoValor(valor: number) {
-    await this.page.getByRole("radio", { name: /Valor fixo/ }).click()
+    await this.page.getByLabel("Tipo de desconto").selectOption({ label: "Valor fixo (R$)" })
     await this.page.getByLabel("Desconto (R$)").fill(String(valor))
   }
 
@@ -45,7 +44,7 @@ export class OrcamentoFormPage {
   }
 
   async submeter() {
-    await this.page.getByRole("button", { name: /Criar Orçamento|Salvar Alterações/ }).click()
+    await this.page.getByRole("button", { name: /Salvar orçamento/i }).click()
   }
 
   async cancelar() {
@@ -56,10 +55,11 @@ export class OrcamentoFormPage {
     await this.page.getByText(valorEsperado).last().waitFor({ state: "visible" })
   }
 
-  /** Mensagem de validação exibida no formulário (parágrafo .text-destructive). */
+  /** Erro de validação em `OrcamentoNovoPage` (`role="alert"`, classe `.page-error`). */
   async verificarMensagemValidacao(texto: string) {
     await this.page
-      .locator("p.text-destructive", { hasText: texto })
+      .getByRole("alert")
+      .filter({ hasText: texto })
       .first()
       .waitFor({ state: "visible" })
   }

@@ -38,8 +38,7 @@ test.describe("Orçamentos", () => {
     await formPage.selecionarCliente(nomeCliente)
     await formPage.adicionarItem()
     await formPage.preencherItem(0, nomeProduto, 2)
-    await formPage.adicionarCondicao()
-    await formPage.preencherCondicao(0, "PIX", 1)
+    await formPage.selecionarTipoPagamento("Pix")
     await formPage.submeter()
 
     await expect(page).toHaveURL(/\/orcamentos\/\d+$/)
@@ -69,8 +68,7 @@ test.describe("Orçamentos", () => {
     await formPage.selecionarCliente(nomeCliente)
     await formPage.adicionarItem()
     await formPage.preencherItem(0, nomeProduto, 1)
-    await formPage.adicionarCondicao()
-    await formPage.preencherCondicao(0, "PIX", 1)
+    await formPage.selecionarTipoPagamento("Pix")
     await formPage.submeter()
 
     const viewPage = new OrcamentoViewPage(page)
@@ -93,8 +91,7 @@ test.describe("Orçamentos", () => {
     const formPage = new OrcamentoFormPage(page)
     await formPage.adicionarItem()
     await formPage.preencherItem(0, nomeProduto, 1)
-    await formPage.adicionarCondicao()
-    await formPage.preencherCondicao(0, "PIX", 1)
+    await formPage.selecionarTipoPagamento("Pix")
     await formPage.submeter()
 
     // Dados inválidos: validação bloqueia submit; exceção = mensagem de validação exibida
@@ -115,8 +112,7 @@ test.describe("Orçamentos", () => {
 
     const formPage = new OrcamentoFormPage(page)
     await formPage.selecionarCliente(nomeCliente)
-    await formPage.adicionarCondicao()
-    await formPage.preencherCondicao(0, "PIX", 1)
+    await formPage.selecionarTipoPagamento("Pix")
     await formPage.submeter()
 
     // Dados inválidos: validação bloqueia submit; exceção = mensagem de validação exibida

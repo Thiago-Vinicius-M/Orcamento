@@ -1,42 +1,13 @@
-import { useCallback, useEffect, useState } from 'react'
-import { getSupabaseClient } from '../lib/supabaseClient'
+import { useCallback, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useSupabase } from '../lib/useSupabase'
 import { formatCurrencyBRL } from '../domain/financeiro/moeda'
 import { formatarStatusOrcamento, getStatusPillClassName } from '../domain/orcamento/status'
-import { toOrcamentoListRow, type OrcamentoListRow, type OrcamentoRawRow } from '../domain/orcamento/mappers'
+import type { OrcamentoListRow } from '../domain/orcamento/mappers'
 import { PageHeader, StatusPill, LoadingState, EmptyState, DataTable, type Column } from '../components'
-
-type OrcamentoResumo = {
-  status: unknown
-  total: number
-}
-
-type DashboardStatus = 'pendente' | 'vigente' | 'reprovado' | 'cancelado'
-
-const dashboardStatuses: readonly DashboardStatus[] = ['pendente', 'vigente', 'reprovado', 'cancelado'] as const
-
-function isDashboardStatus(value: unknown): value is DashboardStatus {
-  return typeof value === 'string' && (dashboardStatuses as readonly string[]).includes(value)
-}
-
-type DashboardMetrics = {
-  countByStatus: Record<DashboardStatus, number>
-  totalPendentes: number
-  totalVigentes: number
-  totalGeral: number
-}
-
-type OrcamentoResumoRaw = {
-  status?: unknown
-  total?: unknown
-}
-
-function toOrcamentoResumo(row: OrcamentoResumoRaw): OrcamentoResumo {
-  return {
-    status: row.status,
-    total: Number(row.total ?? 0),
-  }
-}
+import { loadDashboardMetrics, type DashboardMetrics } from '../application/dashboard/dashboardMetricsService'
+import { fetchDashboardOrcamentosList } from '../application/dashboard/dashboardListsService'
+import { useAsyncEffect } from '../hooks/useAsyncEffect'
 
 const initialMetrics: DashboardMetrics = {
   countByStatus: {
@@ -51,6 +22,7 @@ const initialMetrics: DashboardMetrics = {
 }
 
 export function DashboardPage() {
+  const supaStatus = useSupabase()
   const [metrics, setMetrics] = useState<DashboardMetrics>(initialMetrics)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -61,193 +33,101 @@ export function DashboardPage() {
   const [loadingVigentes, setLoadingVigentes] = useState(false)
   const [errorVigentes, setErrorVigentes] = useState<string | null>(null)
 
-  const carregar = useCallback(async (isCancelled: () => boolean) => {
-    if (isCancelled()) return
+  const carregarMetricas = useCallback(async (signal: { cancelled: boolean }) => {
+    if (signal.cancelled) return
     setLoading(true)
     setError(null)
 
-    const { client: supabaseClient, error: configError } = getSupabaseClient()
-    if (!supabaseClient) {
-      if (isCancelled()) return
-      setError(configError)
+    if (supaStatus.kind !== 'ready') {
+      if (signal.cancelled) return
+      setError(supaStatus.message)
       setLoading(false)
       return
     }
+    const supabaseClient = supaStatus.client
 
-    const { data, error: err } = await supabaseClient
-      .from('orcamentos')
-      .select('status, total')
-      .in('status', ['pendente', 'vigente', 'reprovado', 'cancelado'])
-
-    if (isCancelled()) return
-
-    if (err) {
-      setError(err.message)
-      setLoading(false)
-      return
-    }
-
-    const rows: OrcamentoResumo[] = (data ?? []).map((row) => toOrcamentoResumo((row ?? {}) as OrcamentoResumoRaw))
-
-    const next: DashboardMetrics = {
-      countByStatus: {
-        pendente: 0,
-        vigente: 0,
-        reprovado: 0,
-        cancelado: 0,
-      },
-      totalPendentes: 0,
-      totalVigentes: 0,
-      totalGeral: 0,
-    }
-
-    for (const row of rows) {
-      if (!isDashboardStatus(row.status)) continue
-
-      next.countByStatus[row.status] += 1
-      next.totalGeral += row.total
-
-      if (row.status === 'pendente') {
-        next.totalPendentes += row.total
+    try {
+      const result = await loadDashboardMetrics(supabaseClient)
+      if (signal.cancelled) return
+      if (!result.ok) {
+        setError(result.error)
+        return
       }
-
-      if (row.status === 'vigente') {
-        next.totalVigentes += row.total
+      setMetrics(result.metrics)
+    } catch (e) {
+      if (signal.cancelled) return
+      setError(e instanceof Error ? e.message : 'Erro ao carregar métricas.')
+    } finally {
+      if (!signal.cancelled) {
+        setLoading(false)
       }
     }
+  }, [supaStatus])
 
-    if (isCancelled()) return
-    setMetrics(next)
-    setLoading(false)
-  }, [])
-
-  const carregarPendentes = useCallback(async (isCancelled: () => boolean) => {
-    if (isCancelled()) return
+  const carregarPendentes = useCallback(async (signal: { cancelled: boolean }) => {
+    if (signal.cancelled) return
     setLoadingPendentes(true)
     setErrorPendentes(null)
 
-    const { client: supabaseClient, error: configError } = getSupabaseClient()
-    if (!supabaseClient) {
-      if (isCancelled()) return
-      setErrorPendentes(configError)
+    if (supaStatus.kind !== 'ready') {
+      if (signal.cancelled) return
+      setErrorPendentes(supaStatus.message)
       setLoadingPendentes(false)
       return
     }
+    const supabaseClient = supaStatus.client
 
-    const { data, error: err } = await supabaseClient
-      .from('orcamentos')
-      .select(
-        `
-          id,
-          status,
-          created_at,
-          total,
-          created_by_user_id,
-          created_by_name,
-          clientes!inner ( nome )
-        `,
-      )
-      .eq('status', 'pendente')
-      .order('created_at', { ascending: false })
-
-    if (isCancelled()) return
-
-    if (err) {
-      setErrorPendentes(err.message)
-      setLoadingPendentes(false)
-      return
+    try {
+      const rows = await fetchDashboardOrcamentosList(supabaseClient, 'pendente')
+      if (signal.cancelled) return
+      setOrcamentosPendentes(rows)
+    } catch (e) {
+      if (signal.cancelled) return
+      setErrorPendentes(e instanceof Error ? e.message : 'Erro ao listar pendentes.')
+    } finally {
+      if (!signal.cancelled) {
+        setLoadingPendentes(false)
+      }
     }
+  }, [supaStatus])
 
-    const rows = (data ?? []).map((row) => toOrcamentoListRow((row ?? {}) as OrcamentoRawRow, 'pendente'))
-
-    if (isCancelled()) return
-    setOrcamentosPendentes(rows)
-    setLoadingPendentes(false)
-  }, [])
-
-  useEffect(() => {
-    let cancelled = false
-    const timeout = window.setTimeout(() => {
-      void carregar(() => cancelled)
-    }, 0)
-    return () => {
-      cancelled = true
-      window.clearTimeout(timeout)
-    }
-  }, [carregar])
-
-  const carregarVigentes = useCallback(async (isCancelled: () => boolean) => {
-    if (isCancelled()) return
+  const carregarVigentes = useCallback(async (signal: { cancelled: boolean }) => {
+    if (signal.cancelled) return
     setLoadingVigentes(true)
     setErrorVigentes(null)
 
-    const { client: supabaseClient, error: configError } = getSupabaseClient()
-    if (!supabaseClient) {
-      if (isCancelled()) return
-      setErrorVigentes(configError)
+    if (supaStatus.kind !== 'ready') {
+      if (signal.cancelled) return
+      setErrorVigentes(supaStatus.message)
       setLoadingVigentes(false)
       return
     }
+    const supabaseClient = supaStatus.client
 
-    const { data, error: err } = await supabaseClient
-      .from('orcamentos')
-      .select(
-        `
-          id,
-          status,
-          created_at,
-          total,
-          created_by_user_id,
-          created_by_name,
-          clientes!inner ( nome )
-        `,
-      )
-      .eq('status', 'vigente')
-      .order('created_at', { ascending: false })
-
-    if (isCancelled()) return
-
-    if (err) {
-      setErrorVigentes(err.message)
-      setLoadingVigentes(false)
-      return
+    try {
+      const rows = await fetchDashboardOrcamentosList(supabaseClient, 'vigente')
+      if (signal.cancelled) return
+      setOrcamentosVigentes(rows)
+    } catch (e) {
+      if (signal.cancelled) return
+      setErrorVigentes(e instanceof Error ? e.message : 'Erro ao listar vigentes.')
+    } finally {
+      if (!signal.cancelled) {
+        setLoadingVigentes(false)
+      }
     }
+  }, [supaStatus])
 
-    const rows = (data ?? []).map((row) => toOrcamentoListRow((row ?? {}) as OrcamentoRawRow, 'vigente'))
-
-    if (isCancelled()) return
-    setOrcamentosVigentes(rows)
-    setLoadingVigentes(false)
-  }, [])
-
-  useEffect(() => {
-    let cancelled = false
-    const timeout = window.setTimeout(() => {
-      void carregarPendentes(() => cancelled)
-    }, 0)
-    return () => {
-      cancelled = true
-      window.clearTimeout(timeout)
-    }
-  }, [carregarPendentes])
-
-  useEffect(() => {
-    let cancelled = false
-    const timeout = window.setTimeout(() => {
-      void carregarVigentes(() => cancelled)
-    }, 0)
-    return () => {
-      cancelled = true
-      window.clearTimeout(timeout)
-    }
-  }, [carregarVigentes])
+  useAsyncEffect(carregarMetricas, [carregarMetricas])
+  useAsyncEffect(carregarPendentes, [carregarPendentes])
+  useAsyncEffect(carregarVigentes, [carregarVigentes])
 
   const combinedError = [error, errorPendentes, errorVigentes].filter(Boolean).join(' | ') || null
 
   const pendentesColumns: Column<OrcamentoListRow>[] = [
     { header: 'Nº', accessor: (o) => o.id.slice(0, 8).toUpperCase() },
-    { header: 'Cliente', accessor: (o) => o.cliente_nome },
-    { header: 'Gerado por', accessor: (o) => o.gerado_por_nome },
+    { header: 'Cliente', accessor: (o) => o.cliente_nome, cellClassName: 'table-cell-wrap' },
+    { header: 'Gerado por', accessor: (o) => o.gerado_por_nome, cellClassName: 'table-cell-wrap' },
     {
       header: 'Status',
       accessor: (o) => (
@@ -271,8 +151,8 @@ export function DashboardPage() {
 
   const vigentesColumns: Column<OrcamentoListRow>[] = [
     { header: 'Nº', accessor: (o) => o.id.slice(0, 8).toUpperCase() },
-    { header: 'Cliente', accessor: (o) => o.cliente_nome },
-    { header: 'Gerado por', accessor: (o) => o.gerado_por_nome },
+    { header: 'Cliente', accessor: (o) => o.cliente_nome, cellClassName: 'table-cell-wrap' },
+    { header: 'Gerado por', accessor: (o) => o.gerado_por_nome, cellClassName: 'table-cell-wrap' },
     {
       header: 'Status',
       accessor: (o) => (

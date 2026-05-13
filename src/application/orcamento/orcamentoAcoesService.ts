@@ -3,7 +3,7 @@ import { podeAprovar, podeReprovar, podeCancelar, podeExcluir } from '../../doma
 import {
   atualizarStatusOrcamento,
   excluirOrcamento as excluirOrcamentoRepo,
-} from '../../repositories/orcamentoSupabaseRepository'
+} from '../../repositories/orcamento/orcamentoWriteRepo'
 import type { UserRole } from '../../types/userRole'
 
 export async function aprovarOrcamento(

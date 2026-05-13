@@ -48,7 +48,7 @@ export class ProdutosPage {
   }
 
   async buscar(texto: string) {
-    await this.page.getByPlaceholder("Buscar por nome ou código/SKU...").fill(texto)
+    await this.page.getByLabel("Buscar produtos por nome ou código").fill(texto)
     await this.page.waitForTimeout(300)
   }
 

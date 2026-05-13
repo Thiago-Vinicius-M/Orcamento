@@ -348,7 +348,7 @@ npm run test:integration:auth
 
 ### 5) `functions.invoke(...)` falha sem mensagem útil
 
-- O app tenta extrair detalhes de `error.context` (ver `src/auth/authFlow.ts`). Confira o console do navegador e logs da Edge Function no Dashboard.
+- O app tenta extrair detalhes de `error.context` (ver `src/lib/errors/parseFunctionsError.ts`, usado em fluxos como cadastro de gerente e login de vendedor). Confira o console do navegador e logs da Edge Function no Dashboard.
 
 ### 6) `supabase functions deploy` (ou `db push`) retorna `401 Unauthorized`
 

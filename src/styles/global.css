@@ -37,11 +37,14 @@
 
 html {
   color-scheme: light;
+  min-height: 100vh;
+  min-height: 100dvh;
 }
 
 body {
   margin: 0;
   min-height: 100vh;
+  min-height: 100dvh;
   font-family: var(--font-sans);
   font-size: 16px;
   line-height: 1.5;
@@ -52,10 +55,15 @@ body {
 
 .auth-container {
   min-height: calc(100vh - 4rem);
+  min-height: calc(100dvh - 4rem);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 2rem 1.5rem;
+  box-sizing: border-box;
+  padding: max(2rem, calc(2rem + env(safe-area-inset-top, 0px)))
+    max(1.5rem, calc(1.5rem + env(safe-area-inset-right, 0px)))
+    max(2rem, calc(2rem + env(safe-area-inset-bottom, 0px)))
+    max(1.5rem, calc(1.5rem + env(safe-area-inset-left, 0px)));
 }
 
 .auth-card {
@@ -86,7 +94,9 @@ body {
   color: var(--text-muted);
 }
 
-.form-row input {
+.input-control,
+.form-row input,
+.form-row select {
   border-radius: 0.6rem;
   border: 1px solid rgba(148, 163, 184, 0.7);
   padding: 0.55rem 0.75rem;
@@ -95,9 +105,52 @@ body {
   background: rgba(15, 23, 42, 0.02);
 }
 
-.form-row input:focus {
+.input-control:focus,
+.form-row input:focus,
+.form-row select:focus {
   border-color: var(--accent-blue);
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent-blue) 80%, transparent);
+}
+
+select.input-control,
+.form-row select {
+  font-family: inherit;
+  color: var(--text);
+  cursor: pointer;
+  padding-right: 1.8rem;
+}
+
+.searchable-select-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.searchable-select-panel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  margin-top: 0.25rem;
+  padding: 0.25rem;
+  border-radius: 0.6rem;
+  border: 1px solid rgba(148, 163, 184, 0.7);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-md);
+  max-height: 16rem;
+  overflow-y: auto;
+}
+
+.searchable-select-option {
+  padding: 0.5rem 0.65rem;
+  border-radius: 0.45rem;
+  font-size: 0.95rem;
+  cursor: pointer;
+  color: var(--text);
+}
+
+.searchable-select-option:hover,
+.searchable-select-option[data-active='true'] {
+  background: var(--accent-blue-soft);
 }
 
 .form-help {
@@ -127,7 +180,7 @@ body {
   justify-content: center;
   gap: 0.35rem;
   border-radius: 999px;
-  padding: 0.55rem 1.3rem;
+  padding: 0.4rem 1.3rem;
   border: none;
   background: linear-gradient(120deg, var(--accent-blue));
   color: white;
@@ -141,8 +194,30 @@ body {
   cursor: default;
 }
 
+.btn-primary-new-client {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  border-radius: 999px;
+  padding: 0.5rem 1.3rem;
+  border: none;
+  background: linear-gradient(120deg, var(--accent-blue));
+  color: white;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  height: 2.5rem;
+}
+
+.btn-primary-new-cliente:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
 #root {
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
 }
@@ -233,23 +308,6 @@ h2 {
   color: var(--text-heading);
 }
 
-.form-row select {
-  border-radius: 0.6rem;
-  border: 1px solid rgba(148, 163, 184, 0.7);
-  padding: 0.55rem 0.75rem;
-  font-size: 0.95rem;
-  outline: none;
-  background: rgba(15, 23, 42, 0.02);
-  font-family: inherit;
-  color: var(--text);
-  cursor: pointer;
-}
-
-.form-row select:focus {
-  border-color: var(--accent-blue);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent-blue) 80%, transparent);
-}
-
 .filters-bar {
   display: flex;
   flex-wrap: wrap;
@@ -309,6 +367,54 @@ h2 {
 .btn-filter-primary:hover {
   background: var(--btn-primary-hover);
   border-color: var(--btn-primary-hover);
+}
+
+.btn-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 1.15rem;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: 0.875rem;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.btn-action--disabled,
+.btn-action:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.btn-action--primary {
+  border: none;
+  background: var(--accent-blue);
+  color: #fff;
+}
+
+.btn-action--success {
+  border: none;
+  background: var(--accent-green);
+  color: #fff;
+}
+
+.btn-action--danger {
+  border: none;
+  background: var(--accent-red);
+  color: #fff;
+}
+
+.btn-action--warning {
+  border: none;
+  background: var(--accent-orange);
+  color: #fff;
+}
+
+.btn-action--outline-danger {
+  border: 1px solid var(--accent-red);
+  background: var(--accent-red-soft);
+  color: var(--accent-red);
 }
 
 /* Placeholder de página */
@@ -439,8 +545,11 @@ h2 {
 /* ───────── Tabelas ───────── */
 
 .table-wrapper {
+  width: 100%;
+  max-width: 100%;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
 }
 
 .table {
@@ -468,6 +577,11 @@ h2 {
 
 .table td {
   border-bottom: 1px solid var(--border);
+}
+
+.table td:has(> select.input-control) {
+  white-space: normal;
+  min-width: 10rem;
 }
 
 .table tbody tr:hover {
@@ -500,6 +614,29 @@ h2 {
 }
 
 .btn-secondary:hover {
+  background: var(--bg-page);
+  border-color: var(--text-muted);
+}
+
+.btn-secondary-new-client {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  border-radius: 999px;
+  padding: 0.55rem 1.3rem;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text);
+  font-weight: 500;
+  font-size: 0.875rem;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, border-color 0.15s;
+  height: 2.5rem;
+}
+
+.btn-secondary-new-client:hover {
   background: var(--bg-page);
   border-color: var(--text-muted);
 }
@@ -570,7 +707,7 @@ h2 {
 .form-actions {
   display: flex;
   gap: 0.75rem;
-  padding-top: 0.5rem;
+  padding-top: 2rem;
 }
 
 .form-actions-right {
@@ -802,6 +939,59 @@ h2 {
     flex: 1;
   }
 
+  .filters-bar .form-row label {
+    white-space: normal;
+  }
+
+  /* Inputs 16px até 768px — evita zoom no focus (iOS) */
+  .input-control,
+  .form-row input,
+  .form-row select,
+  .form-row textarea {
+    font-size: 1rem;
+  }
+
+  /* Alvos de toque ~44px */
+  .btn-action,
+  .btn-primary,
+  .btn-secondary,
+  .btn-filter,
+  .btn-primary-new-client,
+  .btn-secondary-new-client {
+    min-height: 44px;
+  }
+
+  .btn-primary-new-client,
+  .btn-secondary-new-client {
+    height: auto;
+  }
+
+  .btn-link,
+  .btn-link-danger {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    padding: 0.5rem 0.65rem;
+  }
+
+  .checkbox-inline {
+    min-height: 44px;
+    padding-block: 0.2rem;
+    box-sizing: border-box;
+  }
+
+  .checkbox-inline input[type='checkbox'] {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+
+  .searchable-select-option {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    padding: 0.65rem 0.75rem;
+  }
+
   .table th,
   .table td {
     padding: 0.5rem 0.6rem;
@@ -812,6 +1002,12 @@ h2 {
     margin: 0 -1rem;
     padding: 0 0;
     border-radius: 0;
+  }
+
+  /* Quebra de texto só em ≤768px; no desktop as células seguem nowrap da .table */
+  .table td.table-cell-wrap {
+    white-space: normal;
+    word-break: break-word;
   }
 
   .totais-grid {
@@ -833,7 +1029,17 @@ h2 {
   }
 
   .auth-container {
-    padding: 1rem;
+    padding: max(1rem, calc(1rem + env(safe-area-inset-top, 0px)))
+      max(1rem, calc(1rem + env(safe-area-inset-right, 0px)))
+      max(1rem, calc(1rem + env(safe-area-inset-bottom, 0px)))
+      max(1rem, calc(1rem + env(safe-area-inset-left, 0px)));
+  }
+
+  /* Conteúdo autenticado: respeita safe area (home indicator / bordas) além do padding do layout */
+  #main-content {
+    padding-left: max(0.75rem, env(safe-area-inset-left, 0px));
+    padding-right: max(0.75rem, env(safe-area-inset-right, 0px));
+    padding-bottom: calc(2rem + env(safe-area-inset-bottom, 0px));
   }
 
   .error-boundary {
@@ -922,13 +1128,18 @@ h2 {
   }
 
   .auth-container {
-    padding: 0.75rem;
+    padding: max(0.75rem, calc(0.75rem + env(safe-area-inset-top, 0px)))
+      max(0.75rem, calc(0.75rem + env(safe-area-inset-right, 0px)))
+      max(0.75rem, calc(0.75rem + env(safe-area-inset-bottom, 0px)))
+      max(0.75rem, calc(0.75rem + env(safe-area-inset-left, 0px)));
     min-height: calc(100vh - 2rem);
+    min-height: calc(100dvh - 2rem);
   }
 
-  .form-row input,
-  .form-row select {
-    font-size: 1rem;
+  #main-content {
+    padding-left: max(0.5rem, env(safe-area-inset-left, 0px));
+    padding-right: max(0.5rem, env(safe-area-inset-right, 0px));
+    padding-bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
   }
 
   .error-boundary {

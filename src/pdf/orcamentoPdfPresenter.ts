@@ -1,5 +1,7 @@
+import { formatDate } from "../domain/datas/data";
 import { formatCurrencyBRL } from "../domain/financeiro/moeda";
-import { calcularResumoFinanciamento } from "../domain/orcamento/calculos";
+import { buildPagamentoResumoPdf, pagamentoFromPdfModel } from "../domain/orcamento/pagamento";
+import { calcularValidade30Dias } from "../domain/orcamento/validade";
 import type { Orcamento } from "../types/orcamento";
 
 export interface OrcamentoPdfItemViewModel {
@@ -56,27 +58,6 @@ function formatCurrency(value: number): string {
   return formatCurrencyBRL(value);
 }
 
-function formatDate(value: string): string {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleDateString("pt-BR");
-}
-
-function formatDateFromDate(date: Date): string {
-  if (Number.isNaN(date.getTime())) return "";
-  return date.toLocaleDateString("pt-BR");
-}
-
-function calcularValidade30Dias(criadoEm: string, fallbackValidadeAte?: string): string {
-  const base = new Date(criadoEm);
-  if (!Number.isNaN(base.getTime())) {
-    const validade = new Date(base);
-    validade.setDate(validade.getDate() + 30);
-    return formatDateFromDate(validade);
-  }
-  return fallbackValidadeAte ? formatDate(fallbackValidadeAte) : "";
-}
-
 function formatPercentualTaxaLabel(pct: number): string {
   if (Number.isInteger(pct)) return String(pct);
   return pct.toLocaleString("pt-BR", { maximumFractionDigits: 2, minimumFractionDigits: 0 });
@@ -108,36 +89,12 @@ function buildRodapeContato(orcamento: Orcamento): string {
 }
 
 function buildPagamentoResumo(orcamento: Orcamento): string {
-  const { pagamento, total } = orcamento;
-  const base = `Forma: ${pagamento.tipo}`;
-
-  if (pagamento.tipo !== "financiamento") {
-    return base;
-  }
-
-  const { entrada, valorFinanciado, parcelas, taxa, aplicarTaxa, valorParcela } =
-    calcularResumoFinanciamento({
-      total,
-      valor_entrada: pagamento.valor_entrada ?? null,
-      num_parcelas: pagamento.num_parcelas ?? null,
-      taxa_servico_percentual: pagamento.taxa_servico_percentual ?? null,
-      aplicar_taxa: pagamento.aplicar_taxa ?? false
-    });
-
-  const taxaNominalTotal =
-    aplicarTaxa && taxa > 0 ? Math.max(0, valorFinanciado * (taxa / 100)) : 0;
-  const taxaPorParcela =
-    taxaNominalTotal > 0 && parcelas > 0 ? taxaNominalTotal / parcelas : 0;
-
-  return [
-    base,
-    `Entrada: ${formatCurrency(entrada)}`,
-    `Valor financiado: ${formatCurrency(valorFinanciado)}`,
-    aplicarTaxa && taxa > 0 ? `Taxa serviço: ${taxa.toFixed(2)}%` : undefined,
-    `Parcelas: ${parcelas} x ${formatCurrency(valorParcela)} | Incluindo ${formatCurrency(taxaPorParcela)} de taxa por parcela`
-  ]
-    .filter(Boolean)
-    .join(" | ");
+  const pagamento = pagamentoFromPdfModel(orcamento.pagamento);
+  return buildPagamentoResumoPdf(pagamento, {
+    subtotal: orcamento.subtotal,
+    desconto_total: orcamento.descontos ?? 0,
+    total: orcamento.total,
+  });
 }
 
 const TERMOS_PADRAO_PDF =

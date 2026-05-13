@@ -5,6 +5,8 @@ export type Column<T> = {
   accessor: (row: T) => ReactNode
   /** Fixed narrow width (e.g. actions column). Maps to style={{ width: '1%' }} */
   shrink?: boolean
+  /** e.g. `table-cell-wrap` — estilos em `global.css` (mobile). */
+  cellClassName?: string
 }
 
 type DataTableProps<T> = {
@@ -30,7 +32,9 @@ export function DataTable<T>({ columns, data, rowKey }: DataTableProps<T>) {
           {data.map((row) => (
             <tr key={rowKey(row)}>
               {columns.map((col, i) => (
-                <td key={i}>{col.accessor(row)}</td>
+                <td key={i} className={col.cellClassName}>
+                  {col.accessor(row)}
+                </td>
               ))}
             </tr>
           ))}

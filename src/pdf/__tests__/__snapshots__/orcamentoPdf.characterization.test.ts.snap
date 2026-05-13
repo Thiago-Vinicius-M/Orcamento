@@ -1,0 +1,280 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`orcamentoPdf caracterização (Fase 0) > ViewModel snapshot 'aVistaDinheiro' > viewModel-aVistaDinheiro 1`] = `
+{
+  "avisoValidade": "Este orçamento é válido somente até a data indicada acima. Valores podem sofrer alteração após o vencimento.",
+  "clienteLinhas": [
+    "Cliente Caracterização",
+    "Documento: 123.456.789-00",
+    "Endereço: Rua das Flores, 42",
+    "Contato: (11) 98888-7777 | cliente@fixtures.example",
+  ],
+  "dataEmissao": "15/01/2024",
+  "dataValidade": "14/02/2024",
+  "empresaLinhas": [
+    "CNPJ/CPF: 12.345.678/0001-90",
+    "Av. Paulista, 1000 — São Paulo/SP",
+    "Contato: (11) 3000-0000 | contato@fixtures.example",
+  ],
+  "empresaNome": "Empresa Fixtures LTDA",
+  "geradoPorLinha": "Gerado por: Fulano da Silva",
+  "itens": [
+    {
+      "descricao": "Serviço de implantação",
+      "precoUnitario": "R$ 500,00",
+      "quantidade": "2",
+      "subtotal": "R$ 1.000,00",
+    },
+    {
+      "descricao": "Licença anual",
+      "precoUnitario": "R$ 1.000,00",
+      "quantidade": "1",
+      "subtotal": "R$ 1.000,00",
+    },
+  ],
+  "observacoes": "Observação de teste para caracterização.",
+  "orcamentoNumero": "Nº 2024-099",
+  "pagamentoResumo": "Forma: dinheiro",
+  "rodape": {
+    "contato": "(11) 3000-0000 | contato@fixtures.example",
+    "empresaNome": "Empresa Fixtures LTDA",
+  },
+  "status": "Status: VIGENTE",
+  "termosCondicoes": "Os valores e condições deste documento constituem proposta comercial. A aceitação formal do orçamento e o cumprimento da forma de pagamento acordada caracterizam o fechamento do negócio. Mercadorias e prazos ficam sujeitos à disponibilidade e confirmação no momento da contratação.",
+  "tituloDocumento": "Orçamento",
+  "totais": {
+    "descontoValorDisplay": "-R$ 0,00",
+    "descontos": "R$ 0,00",
+    "mostrarDesconto": false,
+    "mostrarTaxa": false,
+    "rotuloDesconto": "",
+    "rotuloTaxa": "",
+    "subtotal": "R$ 2.000,00",
+    "taxas": "R$ 0,00",
+    "total": "R$ 2.000,00",
+  },
+}
+`;
+
+exports[`orcamentoPdf caracterização (Fase 0) > ViewModel snapshot 'descontoFixoNoTotal' > viewModel-descontoFixoNoTotal 1`] = `
+{
+  "avisoValidade": "Este orçamento é válido somente até a data indicada acima. Valores podem sofrer alteração após o vencimento.",
+  "clienteLinhas": [
+    "Cliente Caracterização",
+    "Documento: 123.456.789-00",
+    "Endereço: Rua das Flores, 42",
+    "Contato: (11) 98888-7777 | cliente@fixtures.example",
+  ],
+  "dataEmissao": "15/01/2024",
+  "dataValidade": "14/02/2024",
+  "empresaLinhas": [
+    "CNPJ/CPF: 12.345.678/0001-90",
+    "Av. Paulista, 1000 — São Paulo/SP",
+    "Contato: (11) 3000-0000 | contato@fixtures.example",
+  ],
+  "empresaNome": "Empresa Fixtures LTDA",
+  "geradoPorLinha": "Gerado por: Fulano da Silva",
+  "itens": [
+    {
+      "descricao": "Serviço de implantação",
+      "precoUnitario": "R$ 500,00",
+      "quantidade": "2",
+      "subtotal": "R$ 1.000,00",
+    },
+    {
+      "descricao": "Licença anual",
+      "precoUnitario": "R$ 1.000,00",
+      "quantidade": "1",
+      "subtotal": "R$ 1.000,00",
+    },
+  ],
+  "observacoes": "Observação de teste para caracterização.",
+  "orcamentoNumero": "Nº 2024-099",
+  "pagamentoResumo": "Forma: dinheiro",
+  "rodape": {
+    "contato": "(11) 3000-0000 | contato@fixtures.example",
+    "empresaNome": "Empresa Fixtures LTDA",
+  },
+  "status": "Status: VIGENTE",
+  "termosCondicoes": "Os valores e condições deste documento constituem proposta comercial. A aceitação formal do orçamento e o cumprimento da forma de pagamento acordada caracterizam o fechamento do negócio. Mercadorias e prazos ficam sujeitos à disponibilidade e confirmação no momento da contratação.",
+  "tituloDocumento": "Orçamento",
+  "totais": {
+    "descontoValorDisplay": "-R$ 250,00",
+    "descontos": "R$ 250,00",
+    "mostrarDesconto": true,
+    "mostrarTaxa": false,
+    "rotuloDesconto": "Desconto aplicado no valor total",
+    "rotuloTaxa": "",
+    "subtotal": "R$ 2.000,00",
+    "taxas": "R$ 0,00",
+    "total": "R$ 1.750,00",
+  },
+}
+`;
+
+exports[`orcamentoPdf caracterização (Fase 0) > ViewModel snapshot 'descontoPercentualNosItens' > viewModel-descontoPercentualNosItens 1`] = `
+{
+  "avisoValidade": "Este orçamento é válido somente até a data indicada acima. Valores podem sofrer alteração após o vencimento.",
+  "clienteLinhas": [
+    "Cliente Caracterização",
+    "Documento: 123.456.789-00",
+    "Endereço: Rua das Flores, 42",
+    "Contato: (11) 98888-7777 | cliente@fixtures.example",
+  ],
+  "dataEmissao": "15/01/2024",
+  "dataValidade": "14/02/2024",
+  "empresaLinhas": [
+    "CNPJ/CPF: 12.345.678/0001-90",
+    "Av. Paulista, 1000 — São Paulo/SP",
+    "Contato: (11) 3000-0000 | contato@fixtures.example",
+  ],
+  "empresaNome": "Empresa Fixtures LTDA",
+  "geradoPorLinha": "Gerado por: Fulano da Silva",
+  "itens": [
+    {
+      "descricao": "Serviço de implantação",
+      "precoUnitario": "R$ 500,00",
+      "quantidade": "2",
+      "subtotal": "R$ 1.000,00",
+    },
+    {
+      "descricao": "Licença anual",
+      "precoUnitario": "R$ 1.000,00",
+      "quantidade": "1",
+      "subtotal": "R$ 1.000,00",
+    },
+  ],
+  "observacoes": "Observação de teste para caracterização.",
+  "orcamentoNumero": "Nº 2024-099",
+  "pagamentoResumo": "Forma: dinheiro",
+  "rodape": {
+    "contato": "(11) 3000-0000 | contato@fixtures.example",
+    "empresaNome": "Empresa Fixtures LTDA",
+  },
+  "status": "Status: VIGENTE",
+  "termosCondicoes": "Os valores e condições deste documento constituem proposta comercial. A aceitação formal do orçamento e o cumprimento da forma de pagamento acordada caracterizam o fechamento do negócio. Mercadorias e prazos ficam sujeitos à disponibilidade e confirmação no momento da contratação.",
+  "tituloDocumento": "Orçamento",
+  "totais": {
+    "descontoValorDisplay": "-R$ 200,00",
+    "descontos": "R$ 200,00",
+    "mostrarDesconto": true,
+    "mostrarTaxa": false,
+    "rotuloDesconto": "Desconto aplicado nos itens",
+    "rotuloTaxa": "",
+    "subtotal": "R$ 2.000,00",
+    "taxas": "R$ 0,00",
+    "total": "R$ 1.800,00",
+  },
+}
+`;
+
+exports[`orcamentoPdf caracterização (Fase 0) > ViewModel snapshot 'financiamentoComTaxa' > viewModel-financiamentoComTaxa 1`] = `
+{
+  "avisoValidade": "Este orçamento é válido somente até a data indicada acima. Valores podem sofrer alteração após o vencimento.",
+  "clienteLinhas": [
+    "Cliente Caracterização",
+    "Documento: 123.456.789-00",
+    "Endereço: Rua das Flores, 42",
+    "Contato: (11) 98888-7777 | cliente@fixtures.example",
+  ],
+  "dataEmissao": "15/01/2024",
+  "dataValidade": "14/02/2024",
+  "empresaLinhas": [
+    "CNPJ/CPF: 12.345.678/0001-90",
+    "Av. Paulista, 1000 — São Paulo/SP",
+    "Contato: (11) 3000-0000 | contato@fixtures.example",
+  ],
+  "empresaNome": "Empresa Fixtures LTDA",
+  "geradoPorLinha": "Gerado por: Fulano da Silva",
+  "itens": [
+    {
+      "descricao": "Serviço de implantação",
+      "precoUnitario": "R$ 500,00",
+      "quantidade": "2",
+      "subtotal": "R$ 1.000,00",
+    },
+    {
+      "descricao": "Licença anual",
+      "precoUnitario": "R$ 1.000,00",
+      "quantidade": "1",
+      "subtotal": "R$ 1.000,00",
+    },
+  ],
+  "observacoes": "Observação de teste para caracterização.",
+  "orcamentoNumero": "Nº 2024-099",
+  "pagamentoResumo": "Forma: financiamento | Entrada: R$ 400,00 | Valor financiado: R$ 1.600,00 | Taxa serviço: 3.25% | Parcelas: 8 x R$ 206,50 | Incluindo R$ 6,50 de taxa por parcela",
+  "rodape": {
+    "contato": "(11) 3000-0000 | contato@fixtures.example",
+    "empresaNome": "Empresa Fixtures LTDA",
+  },
+  "status": "Status: VIGENTE",
+  "termosCondicoes": "Os valores e condições deste documento constituem proposta comercial. A aceitação formal do orçamento e o cumprimento da forma de pagamento acordada caracterizam o fechamento do negócio. Mercadorias e prazos ficam sujeitos à disponibilidade e confirmação no momento da contratação.",
+  "tituloDocumento": "Orçamento",
+  "totais": {
+    "descontoValorDisplay": "-R$ 0,00",
+    "descontos": "R$ 0,00",
+    "mostrarDesconto": false,
+    "mostrarTaxa": false,
+    "rotuloDesconto": "",
+    "rotuloTaxa": "",
+    "subtotal": "R$ 2.000,00",
+    "taxas": "R$ 0,00",
+    "total": "R$ 2.000,00",
+  },
+}
+`;
+
+exports[`orcamentoPdf caracterização (Fase 0) > ViewModel snapshot 'semGeradoPorNumeroPdf' > viewModel-semGeradoPorNumeroPdf 1`] = `
+{
+  "avisoValidade": "Este orçamento é válido somente até a data indicada acima. Valores podem sofrer alteração após o vencimento.",
+  "clienteLinhas": [
+    "Cliente Caracterização",
+    "Documento: 123.456.789-00",
+    "Endereço: Rua das Flores, 42",
+    "Contato: (11) 98888-7777 | cliente@fixtures.example",
+  ],
+  "dataEmissao": "15/01/2024",
+  "dataValidade": "14/02/2024",
+  "empresaLinhas": [
+    "CNPJ/CPF: 12.345.678/0001-90",
+    "Av. Paulista, 1000 — São Paulo/SP",
+    "Contato: (11) 3000-0000 | contato@fixtures.example",
+  ],
+  "empresaNome": "Empresa Fixtures LTDA",
+  "itens": [
+    {
+      "descricao": "Serviço de implantação",
+      "precoUnitario": "R$ 500,00",
+      "quantidade": "2",
+      "subtotal": "R$ 1.000,00",
+    },
+    {
+      "descricao": "Licença anual",
+      "precoUnitario": "R$ 1.000,00",
+      "quantidade": "1",
+      "subtotal": "R$ 1.000,00",
+    },
+  ],
+  "observacoes": "Observação de teste para caracterização.",
+  "orcamentoNumero": "Nº —",
+  "pagamentoResumo": "Forma: dinheiro",
+  "rodape": {
+    "contato": "(11) 3000-0000 | contato@fixtures.example",
+    "empresaNome": "Empresa Fixtures LTDA",
+  },
+  "status": "Status: VIGENTE",
+  "termosCondicoes": "Os valores e condições deste documento constituem proposta comercial. A aceitação formal do orçamento e o cumprimento da forma de pagamento acordada caracterizam o fechamento do negócio. Mercadorias e prazos ficam sujeitos à disponibilidade e confirmação no momento da contratação.",
+  "tituloDocumento": "Orçamento",
+  "totais": {
+    "descontoValorDisplay": "-R$ 0,00",
+    "descontos": "R$ 0,00",
+    "mostrarDesconto": false,
+    "mostrarTaxa": false,
+    "rotuloDesconto": "",
+    "rotuloTaxa": "",
+    "subtotal": "R$ 2.000,00",
+    "taxas": "R$ 0,00",
+    "total": "R$ 2.000,00",
+  },
+}
+`;

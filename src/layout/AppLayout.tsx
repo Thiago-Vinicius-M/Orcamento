@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import styles from './AppLayout.module.css'
@@ -9,7 +9,7 @@ import {
 } from '../auth/preferredLogin'
 import type { PreferredLogin } from '../auth/preferredLogin'
 import { useUserRole } from '../hooks/useUserRole'
-import { supabase } from '../lib/supabaseClient'
+import { useSupabase } from '../lib/useSupabase'
 import { ErrorBoundary } from '../components/ErrorBoundary'
 import logoOrca from '../assets/img/logoOrca.png'
 
@@ -17,9 +17,42 @@ type NavItem = { to: string; label: string; end?: boolean }
 
 export function AppLayout() {
   const navigate = useNavigate()
+  const supabaseStatus = useSupabase()
   const { role, loading: roleLoading } = useUserRole()
   const [loggingOut, setLoggingOut] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 768px)')
+
+    const syncBodyScrollLock = () => {
+      document.body.style.overflow = menuOpen && mq.matches ? 'hidden' : ''
+    }
+
+    syncBodyScrollLock()
+
+    const onMqChange = () => {
+      if (!mq.matches) {
+        setMenuOpen(false)
+      }
+      syncBodyScrollLock()
+    }
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && menuOpen && mq.matches) {
+        setMenuOpen(false)
+      }
+    }
+
+    mq.addEventListener('change', onMqChange)
+    document.addEventListener('keydown', onKeyDown)
+
+    return () => {
+      mq.removeEventListener('change', onMqChange)
+      document.removeEventListener('keydown', onKeyDown)
+      document.body.style.overflow = ''
+    }
+  }, [menuOpen])
 
   const navItems = useMemo<NavItem[]>(() => {
     const operacional: NavItem[] = [
@@ -27,13 +60,21 @@ export function AppLayout() {
       { to: '/clientes', label: 'Clientes' },
       { to: '/orcamentos', label: 'Orçamentos' },
     ]
-    if (role === 'gerente' && !roleLoading) {
+    const configuracoes: NavItem = { to: '/configuracoes', label: 'Configurações' }
+
+    if (roleLoading) {
+      return operacional
+    }
+    if (role === 'gerente') {
       return [
         ...operacional,
         { to: '/produtos', label: 'Produtos' },
         { to: '/vendedores', label: 'Vendedores' },
-        { to: '/configuracoes', label: 'Configurações' },
+        configuracoes,
       ]
+    }
+    if (role === 'vendedor') {
+      return [...operacional, { to: '/produtos', label: 'Produtos' }, configuracoes]
     }
     return operacional
   }, [role, roleLoading])
@@ -49,8 +90,8 @@ export function AppLayout() {
             ? 'gerente'
             : getPreferredLoginKind() ?? 'gerente'
       setPreferredLogin(logoutLogin)
-      if (supabase) {
-        const { error: signOutError } = await supabase.auth.signOut()
+      if (supabaseStatus.kind === 'ready') {
+        const { error: signOutError } = await supabaseStatus.client.auth.signOut()
         if (signOutError) {
           console.error('Erro ao fazer logout:', signOutError.message)
           toast.error('Erro ao fazer logout. Você será redirecionado mesmo assim.')
@@ -120,6 +161,15 @@ export function AppLayout() {
           </div>
         </div>
       </header>
+
+      {menuOpen ? (
+        <div
+          role="presentation"
+          className={styles.navBackdrop}
+          aria-hidden
+          onClick={() => setMenuOpen(false)}
+        />
+      ) : null}
 
       <main id="main-content" className={styles.main}>
         <ErrorBoundary>

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { getErrorMessage } from './authFlow'
+import { toUserMessage } from '../lib/errors'
 
 type AsyncAction = () => Promise<void>
 
@@ -16,7 +16,7 @@ export function useAuthFlow(defaultErrorMessage: string) {
     try {
       await action()
     } catch (err) {
-      setError(getErrorMessage(err, defaultErrorMessage))
+      setError(toUserMessage(err, defaultErrorMessage))
     } finally {
       setLoading(false)
     }

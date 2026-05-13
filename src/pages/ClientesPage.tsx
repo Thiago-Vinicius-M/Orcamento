@@ -1,16 +1,13 @@
-import { useCallback, useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
+import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
+import { matchesSearch } from '../lib/searchNormalize'
 import { supabaseConfigured, SUPABASE_NOT_CONFIGURED_MESSAGE } from '../lib/supabaseClient'
 import { useCrudFormState } from '../hooks/useCrudFormState'
+import { useCrudResource } from '../hooks/useCrudResource'
 import { PageHeader, LoadingState, EmptyState, DataTable, FormField, type Column } from '../components'
 import type { Cliente, ClientePayload } from '../repositories/clienteRepository'
-import {
-  listClientes as repoListClientes,
-  createCliente,
-  updateCliente,
-  deleteCliente,
-} from '../repositories/clienteRepository'
+import { clienteRepo } from '../repositories/clienteRepository'
 
 type FormState = {
   id?: string
@@ -22,11 +19,35 @@ type FormState = {
 }
 
 export function ClientesPage() {
-  const [clientes, setClientes] = useState<Cliente[]>([])
-  const [loading, setLoading] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const { showForm, setShowForm, form, setForm, isEdit, resetForm, closeForm, handleNovo } =
+  const {
+    items: clientes,
+    loading,
+    saving,
+    error,
+    setError,
+    create,
+    update,
+    remove,
+  } = useCrudResource(clienteRepo, {
+    isConfigured: () => supabaseConfigured,
+    notConfiguredMessage: SUPABASE_NOT_CONFIGURED_MESSAGE,
+    loadErrorFallback: 'Erro ao carregar clientes.',
+    sortItems: (a, b) => a.nome.localeCompare(b.nome, 'pt-BR'),
+  })
+
+  const [filtroBusca, setFiltroBusca] = useState('')
+
+  const clientesFiltrados = useMemo(
+    () =>
+      clientes.filter(
+        (c) =>
+          matchesSearch(c.nome, filtroBusca) ||
+          matchesSearch(c.documento ?? '', filtroBusca),
+      ),
+    [clientes, filtroBusca],
+  )
+
+  const { showForm, setShowForm, form, setForm, isEdit, closeForm, handleNovo } =
     useCrudFormState<FormState>(() => ({
       nome: '',
       documento: '',
@@ -34,33 +55,6 @@ export function ClientesPage() {
       telefone: '',
       endereco: '',
     }))
-
-  const carregarClientes = useCallback(async () => {
-    setLoading(true)
-    setError(null)
-
-    if (!supabaseConfigured) {
-      setError(SUPABASE_NOT_CONFIGURED_MESSAGE)
-      setLoading(false)
-      return
-    }
-
-    try {
-      const data = await repoListClientes()
-      setClientes(data)
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Erro ao carregar clientes.')
-    }
-
-    setLoading(false)
-  }, [])
-
-  useEffect(() => {
-    const timeout = window.setTimeout(() => {
-      void carregarClientes()
-    }, 0)
-    return () => window.clearTimeout(timeout)
-  }, [carregarClientes])
 
   function handleEdit(cliente: Cliente) {
     setForm({
@@ -80,23 +74,15 @@ export function ClientesPage() {
     )
     if (!confirmar) return
 
-    setSaving(true)
-    setError(null)
-
     try {
-      await deleteCliente(cliente.id)
-      setClientes((prev) => prev.filter((c) => c.id !== cliente.id))
+      await remove(cliente.id)
       if (form.id === cliente.id) {
         closeForm()
       }
       toast.success(`Cliente "${cliente.nome}" excluído com sucesso.`)
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : 'Falha ao excluir cliente.'
-      setError(msg)
+    } catch {
       toast.error('Falha ao excluir cliente.')
     }
-
-    setSaving(false)
   }
 
   function buildPayload(): ClientePayload {
@@ -116,38 +102,29 @@ export function ClientesPage() {
       return
     }
 
-    setSaving(true)
-    setError(null)
     const payload = buildPayload()
 
     try {
       if (isEdit && form.id) {
-        const updated = await updateCliente(form.id, payload)
-        setClientes((prev) => prev.map((c) => (c.id === updated.id ? updated : c)))
-        resetForm()
-        setShowForm(false)
+        await update(form.id, payload)
+        closeForm()
         toast.success('Cliente atualizado com sucesso.')
       } else {
-        const created = await createCliente(payload)
-        setClientes((prev) => [...prev, created])
-        resetForm()
-        setShowForm(false)
+        await create(payload)
+        closeForm()
         toast.success('Cliente criado com sucesso.')
       }
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : 'Falha ao salvar cliente.'
-      setError(msg)
+    } catch {
       toast.error('Falha ao salvar cliente.')
     }
-
-    setSaving(false)
   }
 
   const clienteColumns: Column<Cliente>[] = [
-    { header: 'Nome', accessor: (c) => c.nome },
+    { header: 'Nome', accessor: (c) => c.nome, cellClassName: 'table-cell-wrap' },
     { header: 'Documento', accessor: (c) => c.documento ?? '—' },
     {
       header: 'Contato',
+      cellClassName: 'table-cell-wrap',
       accessor: (c) => (
         <div className="stack-vertical">
           {c.email && <span className="text-sm text-muted">{c.email}</span>}
@@ -249,19 +226,15 @@ export function ClientesPage() {
               <div className="form-actions">
                 <button
                   type="button"
-                  className="btn-secondary"
+                  className="btn-secondary-new-client"
                   onClick={closeForm}
                   disabled={saving}
                 >
                   {isEdit ? 'Cancelar edição' : 'Cancelar'}
                 </button>
 
-                <button type="submit" className="btn-primary" disabled={saving}>
-                  {saving
-                    ? 'Salvando...'
-                    : isEdit
-                      ? 'Salvar alterações'
-                      : 'Criar cliente'}
+                <button type="submit" className="btn-primary-new-client" disabled={saving}>
+                  {saving ? 'Salvando...' : isEdit ? 'Salvar alterações' : 'Criar cliente'}
                 </button>
               </div>
             </form>
@@ -271,11 +244,14 @@ export function ClientesPage() {
         <section className="card">
           <header className="card-header card-header-row">
             <h2>Lista de clientes</h2>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
               <button type="button" className="btn-primary" onClick={handleNovo}>
                 Novo
               </button>
-              <span className="badge">{clientes.length}</span>
+              <span className="badge">{clientesFiltrados.length}</span>
+              {filtroBusca.trim() && clientes.length > 0 ? (
+                <span className="text-sm text-muted">de {clientes.length}</span>
+              ) : null}
             </div>
           </header>
 
@@ -284,7 +260,28 @@ export function ClientesPage() {
           ) : clientes.length === 0 ? (
             <EmptyState message='Nenhum cliente cadastrado ainda. Clique em "Novo" para adicionar o primeiro.' />
           ) : (
-            <DataTable columns={clienteColumns} data={clientes} rowKey={(c) => c.id} />
+            <>
+              <div className="filters-bar" style={{ marginBottom: '1rem' }}>
+                <div className="form-row">
+                  <label htmlFor="clientes-busca">Buscar</label>
+                  <input
+                    id="clientes-busca"
+                    type="search"
+                    className="input-control"
+                    value={filtroBusca}
+                    onChange={(e) => setFiltroBusca(e.target.value)}
+                    placeholder="Buscar por nome ou CPF/CNPJ..."
+                    aria-label="Buscar clientes por nome ou documento"
+                  />
+                </div>
+              </div>
+
+              {clientesFiltrados.length === 0 ? (
+                <EmptyState message="Nenhum cliente encontrado para esta busca. Ajuste o termo ou limpe o filtro." />
+              ) : (
+                <DataTable columns={clienteColumns} data={clientesFiltrados} rowKey={(c) => c.id} />
+              )}
+            </>
           )}
         </section>
       </div>

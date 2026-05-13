@@ -5,7 +5,7 @@ import { gerarPdfOrcamento } from '../../pdf/orcamentoPdf'
 import {
   loadOrcamentoPdfData,
   type OrcamentoPdfDataRaw,
-} from '../../repositories/orcamentoSupabaseRepository'
+} from '../../repositories/orcamento/orcamentoPdfRepo'
 import { OrcamentoSchema, type Orcamento } from '../../types/orcamento'
 
 const pagamentoTipoSchema = z.enum(['dinheiro', 'debito', 'credito', 'pix', 'boleto', 'financiamento'])

@@ -3,37 +3,16 @@ import type { FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { fetchCurrentRole } from '../auth/fetchCurrentRole'
 import { setPreferredLogin } from '../auth/preferredLogin'
-import { ensureSupabase, getFunctionsErrorMessage } from '../auth/authFlow'
+import { buildRegisterGerenteErrorMessage } from '../auth/errors'
 import { useAuthFlow } from '../auth/useAuthFlow'
+import { parseFunctionsError } from '../lib/errors'
+import { useSupabase } from '../lib/useSupabase'
 
 type Step = 'signup' | 'check-email'
 
-function buildRegisterGerenteErrorMessage(rawMessage: string): string {
-  const normalized = rawMessage.trim()
-  if (!normalized) return 'Falha ao criar conta. Tente novamente em instantes.'
-
-  const lower = normalized.toLowerCase()
-
-  if (lower.includes('database error saving new user')) {
-    return (
-      'Falha ao criar conta: erro ao salvar usuário no banco durante o onboarding da empresa/perfil. ' +
-      `Detalhe técnico: ${normalized}`
-    )
-  }
-
-  if (lower.includes('user already registered') || lower.includes('already registered')) {
-    return `Este e-mail já está cadastrado. Use outro e-mail ou faça login. Detalhe técnico: ${normalized}`
-  }
-
-  if (lower.includes('invalid login credentials')) {
-    return `Credenciais inválidas para a operação de cadastro. Verifique os dados enviados. Detalhe técnico: ${normalized}`
-  }
-
-  return `Falha ao criar conta no serviço de cadastro. Detalhe técnico: ${normalized}`
-}
-
 export function RegisterGerentePage() {
   const navigate = useNavigate()
+  const supaStatus = useSupabase()
   const [step, setStep] = useState<Step>('signup')
   const { loading, error, setError, clearError, run } = useAuthFlow(
     'Erro inesperado ao criar conta.',
@@ -52,12 +31,13 @@ export function RegisterGerentePage() {
   const [loginCodeGerado, setLoginCodeGerado] = useState<string | null>(null)
 
   useEffect(() => {
+    if (supaStatus.kind !== 'ready') {
+      return
+    }
+    const supabaseClient = supaStatus.client
     let cancelled = false
 
     async function redirectIfAlreadyAuthenticated() {
-      const { client: supabaseClient } = ensureSupabase()
-      if (!supabaseClient) return
-
       const {
         data: { session },
       } = await supabaseClient.auth.getSession()
@@ -74,7 +54,7 @@ export function RegisterGerentePage() {
     return () => {
       cancelled = true
     }
-  }, [navigate])
+  }, [navigate, supaStatus])
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
@@ -91,11 +71,11 @@ export function RegisterGerentePage() {
       return
     }
 
-    const { client: supabaseClient, error: configError } = ensureSupabase()
-    if (!supabaseClient) {
-      setError(configError)
+    if (supaStatus.kind !== 'ready') {
+      setError(supaStatus.message)
       return
     }
+    const supabaseClient = supaStatus.client
 
     await run(async () => {
       // Supabase exige que o `emailRedirectTo` esteja em `Site URL`/`Allowed Redirect URLs`.
@@ -116,7 +96,7 @@ export function RegisterGerentePage() {
       )
 
       if (registerError) {
-        const detail = await getFunctionsErrorMessage(registerError)
+        const detail = await parseFunctionsError(registerError)
         setError(buildRegisterGerenteErrorMessage(detail ?? registerError.message))
         return
       }

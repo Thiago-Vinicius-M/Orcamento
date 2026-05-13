@@ -2,7 +2,6 @@ import { test, expect } from "@playwright/test"
 import { ClientesPage } from "../pages/ClientesPage"
 import {
   clienteValido,
-  clienteInvalido,
   clienteComNome,
 } from "../fixtures/test-data"
 import { LoginPage } from "../pages/LoginPage"

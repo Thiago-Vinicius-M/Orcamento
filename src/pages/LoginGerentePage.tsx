@@ -3,11 +3,12 @@ import type { FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { fetchCurrentRole } from '../auth/fetchCurrentRole'
 import { setPreferredLogin } from '../auth/preferredLogin'
-import { ensureSupabase } from '../auth/authFlow'
 import { useAuthFlow } from '../auth/useAuthFlow'
+import { useSupabase } from '../lib/useSupabase'
 
 export function LoginGerentePage() {
   const navigate = useNavigate()
+  const supabaseStatus = useSupabase()
   const { loading, error, setError, clearError, run } = useAuthFlow(
     'Erro inesperado ao fazer login.',
   )
@@ -26,11 +27,11 @@ export function LoginGerentePage() {
       return
     }
 
-    const { client: supabaseClient, error: configError } = ensureSupabase()
-    if (!supabaseClient) {
-      setError(configError)
+    if (supabaseStatus.kind !== 'ready') {
+      setError(supabaseStatus.message)
       return
     }
+    const supabaseClient = supabaseStatus.client
 
     await run(async () => {
       const { error: signInError } = await supabaseClient.auth.signInWithPassword({

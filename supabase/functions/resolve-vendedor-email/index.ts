@@ -1,24 +1,19 @@
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS, GET',
-}
+import { corsHeadersPostOptionsGet } from '../_shared/cors.ts'
+import { jsonHeaders, jsonResponse, optionsOkResponse } from '../_shared/responses.ts'
 
-const jsonHeaders = { ...corsHeaders, 'Content-Type': 'application/json' }
+const cors = corsHeadersPostOptionsGet()
+const jsonHdrs = jsonHeaders(cors)
 
-const GONE_BODY = JSON.stringify({
+const GONE_BODY = {
   error_code: 'ENDPOINT_DEPRECATED',
   message: 'Este endpoint foi descontinuado.',
-})
+} as const
 
 /** Superfície legada removida: não consulta banco nem devolve dados sensíveis (410 Gone). */
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return optionsOkResponse(cors)
   }
 
-  return new Response(GONE_BODY, {
-    status: 410,
-    headers: jsonHeaders,
-  })
+  return jsonResponse(jsonHdrs, 410, GONE_BODY)
 })

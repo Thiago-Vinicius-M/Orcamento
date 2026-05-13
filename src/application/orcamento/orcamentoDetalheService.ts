@@ -1,11 +1,11 @@
-import type { OrcamentoStatus } from '../../domain/orcamento/status'
-import { findOrcamentoIdByNumeroPdf, loadOrcamentoDetalheRaw } from '../../repositories/orcamentoSupabaseRepository'
-import type {
-  OrcamentoDetalhe,
-  OrcamentoDetalheResult,
-  OrcamentoItemDetalhe,
-  OrcamentoPagamentoDetalhe,
-} from './orcamentoDetalheTypes'
+import { parseOrcamentoStatusValue } from '../../domain/orcamento/status'
+import {
+  mapPagamentoDetalheRow,
+  normalizeCreatedByName,
+  normalizeCreatedByUserId,
+} from '../../mappers/orcamento'
+import { findOrcamentoIdByNumeroPdf, loadOrcamentoDetalheRaw } from '../../repositories/orcamento/orcamentoReadRepo'
+import type { OrcamentoDetalhe, OrcamentoDetalheResult, OrcamentoItemDetalhe } from './orcamentoDetalheTypes'
 
 function getClienteNome(row: Record<string, unknown>): string {
   const clientes = row.clientes
@@ -19,31 +19,13 @@ function getClienteNome(row: Record<string, unknown>): string {
   return typeof nome === 'string' && nome.trim() !== '' ? nome : '—'
 }
 
-function getCreatedByUserId(row: Record<string, unknown>): string | null {
-  const value = row.created_by_user_id
-  if (value === null || value === undefined) {
-    return null
-  }
-  const text = String(value).trim()
-  return text === '' ? null : text
-}
-
-function getCreatedByName(row: Record<string, unknown>): string | null {
-  const value = row.created_by_name
-  if (typeof value !== 'string') {
-    return null
-  }
-  const trimmed = value.trim()
-  return trimmed === '' ? null : trimmed
-}
-
 function mapOrcamento(row: Record<string, unknown>): OrcamentoDetalhe {
-  const createdByUserId = getCreatedByUserId(row)
-  const createdByName = getCreatedByName(row)
+  const createdByUserId = normalizeCreatedByUserId(row.created_by_user_id)
+  const createdByName = normalizeCreatedByName(row.created_by_name)
 
   return {
     id: String(row.id ?? ''),
-    status: String(row.status ?? '') as OrcamentoStatus,
+    status: parseOrcamentoStatusValue(row.status),
     validade_ate: String(row.validade_ate ?? ''),
     subtotal: Number(row.subtotal ?? 0),
     desconto_total: Number(row.desconto_total ?? 0),
@@ -69,21 +51,6 @@ function mapItens(rows: Record<string, unknown>[]): OrcamentoItemDetalhe[] {
       produto_nome: typeof produtos.nome === 'string' ? produtos.nome : '—',
     }
   })
-}
-
-function mapPagamento(row: Record<string, unknown> | null): OrcamentoPagamentoDetalhe | null {
-  if (!row) {
-    return null
-  }
-
-  return {
-    tipo: String(row.tipo ?? ''),
-    valor_entrada: row.valor_entrada === null ? null : Number(row.valor_entrada ?? 0),
-    num_parcelas: row.num_parcelas === null ? null : Number(row.num_parcelas ?? 0),
-    taxa_servico_percentual:
-      row.taxa_servico_percentual === null ? null : Number(row.taxa_servico_percentual ?? 0),
-    aplicar_taxa: Boolean(row.aplicar_taxa),
-  }
 }
 
 function isUuid(value: string): boolean {
@@ -116,6 +83,6 @@ export async function carregarOrcamentoDetalhe(identificador: string): Promise<O
   return {
     orcamento: orcamento ? mapOrcamento(orcamento) : null,
     itens: mapItens(itens),
-    pagamento: mapPagamento(pagamento),
+    pagamento: mapPagamentoDetalheRow(pagamento),
   }
 }

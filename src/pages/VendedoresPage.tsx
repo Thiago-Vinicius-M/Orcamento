@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
-import { getSupabaseClient } from '../lib/supabaseClient'
+import { useSupabase } from '../lib/useSupabase'
 
 type FormState = {
   nome: string
@@ -9,6 +9,7 @@ type FormState = {
 }
 
 export function VendedoresPage() {
+  const supabaseStatus = useSupabase()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
@@ -31,11 +32,11 @@ export function VendedoresPage() {
 
     setLoading(true)
     try {
-      const { client: supabaseClient, error: configError } = getSupabaseClient()
-      if (!supabaseClient) {
-        setError(configError)
+      if (supabaseStatus.kind !== 'ready') {
+        setError(supabaseStatus.message)
         return
       }
+      const supabaseClient = supabaseStatus.client
 
       const { error: fnError } = await supabaseClient.functions.invoke('create-vendedor', {
         body: {
