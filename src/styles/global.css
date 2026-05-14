@@ -96,7 +96,11 @@ body {
 
 .input-control,
 .form-row input,
-.form-row select {
+.form-row select,
+.form-row textarea {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   border-radius: 0.6rem;
   border: 1px solid rgba(148, 163, 184, 0.7);
   padding: 0.55rem 0.75rem;
@@ -107,7 +111,8 @@ body {
 
 .input-control:focus,
 .form-row input:focus,
-.form-row select:focus {
+.form-row select:focus,
+.form-row textarea:focus {
   border-color: var(--accent-blue);
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent-blue) 80%, transparent);
 }
@@ -123,6 +128,28 @@ select.input-control,
 .searchable-select-wrap {
   position: relative;
   width: 100%;
+}
+
+/* Lista aberta: acima de linhas seguintes, desconto/rodapé no mesmo card e de cards seguintes no formulário */
+.card:has(.searchable-select-wrap--open) {
+  position: relative;
+  z-index: 30;
+}
+
+.form-row:has(.searchable-select-wrap--open) {
+  position: relative;
+  z-index: 12;
+}
+
+.table-wrapper:has(.searchable-select-wrap--open) {
+  overflow: visible;
+  position: relative;
+  z-index: 10;
+}
+
+.table tbody tr:has(.searchable-select-wrap--open) {
+  position: relative;
+  z-index: 11;
 }
 
 .searchable-select-panel {
@@ -220,6 +247,11 @@ select.input-control,
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
+}
+
+#main-content {
+  min-width: 0;
+  max-width: min(1200px, 100%);
 }
 
 a {
@@ -333,6 +365,7 @@ h2 {
   display: flex;
   gap: 0.5rem;
   align-items: flex-end;
+  min-width: 0;
   padding-bottom: 0.1rem;
 }
 
@@ -434,6 +467,12 @@ h2 {
   display: grid;
   grid-template-columns: 1fr;
   gap: 1.5rem;
+}
+
+.page-header-subtitle {
+  margin-top: 0.5rem;
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
 }
 
 /* ───────── Erro de página ───────── */
@@ -547,6 +586,7 @@ h2 {
 .table-wrapper {
   width: 100%;
   max-width: 100%;
+  min-width: 0;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-x: contain;
@@ -922,17 +962,21 @@ h2 {
 
   .filters-bar {
     flex-direction: column;
+    align-items: stretch;
     gap: 0.75rem;
     padding: 1rem;
   }
 
   .filters-bar .form-row {
     flex: 1 1 100%;
-    min-width: unset;
+    width: 100%;
+    min-width: 0;
   }
 
   .filters-actions {
+    flex-wrap: wrap;
     width: 100%;
+    min-width: 0;
   }
 
   .filters-actions .btn-filter {
@@ -999,8 +1043,8 @@ h2 {
   }
 
   .table-wrapper {
-    margin: 0 -1rem;
-    padding: 0 0;
+    margin: 0;
+    padding: 0;
     border-radius: 0;
   }
 
@@ -1084,10 +1128,6 @@ h2 {
   .table td {
     padding: 0.4rem 0.5rem;
     font-size: 0.75rem;
-  }
-
-  .table-wrapper {
-    margin: 0 -0.75rem;
   }
 
   .totais-grid {

@@ -1,4 +1,5 @@
 import { test } from "@playwright/test"
+import { e2eGerenteEmail, e2eGerentePassword } from "../credentials"
 import { ProdutosPage } from "../pages/ProdutosPage"
 import {
   produtoValido,
@@ -11,7 +12,7 @@ test.describe("Produtos", () => {
   test.beforeEach(async ({ page }) => {
     const loginPage = new LoginPage(page)
     await loginPage.goto()
-    await loginPage.login("e2e.teste@orcamento.local", "playwright123")
+    await loginPage.login(e2eGerenteEmail, e2eGerentePassword)
     await loginPage.assertLoggedIn()
   })
 

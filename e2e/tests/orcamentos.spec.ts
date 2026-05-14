@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test"
+import { e2eGerenteEmail, e2eGerentePassword } from "../credentials"
 import { ClientesPage } from "../pages/ClientesPage"
 import { ProdutosPage } from "../pages/ProdutosPage"
 import { OrcamentosListPage } from "../pages/OrcamentosListPage"
@@ -11,7 +12,7 @@ test.describe("Orçamentos", () => {
   test.beforeEach(async ({ page }) => {
     const loginPage = new LoginPage(page)
     await loginPage.goto()
-    await loginPage.login("e2e.teste@orcamento.local", "playwright123")
+    await loginPage.login(e2eGerenteEmail, e2eGerentePassword)
     await loginPage.assertLoggedIn()
   })
 

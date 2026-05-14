@@ -14,20 +14,18 @@ export default defineConfig({
     trace: "on-first-retry",
     storageState: "e2e/.auth/admin.json",
   },
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
-  webServer: [
+  projects: [
+    { name: "chromium", use: { ...devices["Desktop Chrome"] } },
     {
-      command: "npm run dev",
-      cwd: "api",
-      url: "http://localhost:3001/api/clientes",
-      reuseExistingServer: !process.env.CI,
-      timeout: 60_000,
-    },
-    {
-      command: "npm run dev",
-      url: "http://localhost:5173",
-      reuseExistingServer: !process.env.CI,
-      timeout: 60_000,
+      name: "Mobile Chrome",
+      use: { ...devices["iPhone 13"] },
+      testMatch: "**/layout-mobile-no-horizontal-scroll.spec.ts",
     },
   ],
+  webServer: {
+    command: "npm run dev",
+    url: "http://localhost:5173",
+    reuseExistingServer: !process.env.CI,
+    timeout: 60_000,
+  },
 })

@@ -11,12 +11,14 @@ export class LoginPage {
   async login(email: string, senha: string) {
     await this.page.getByLabel("E-mail").fill(email)
     await this.page.getByLabel("Senha").fill(senha)
-    await this.page.getByRole("button", { name: "Entrar" }).click()
+    await this.page
+      .getByRole("button", { name: "Entrar", exact: true })
+      .click()
   }
 
   async assertLoggedIn() {
-    // Aguarda redirecionamento para qualquer rota que não seja /login
-    await this.page.waitForURL((url) => !url.pathname.startsWith("/login"))
+    const loginPaths = new Set(["/login", "/login-gerente", "/login-vendedor"])
+    await this.page.waitForURL((url) => !loginPaths.has(url.pathname))
 
     // Garante que o layout autenticado foi carregado
     await this.page.getByRole("link", { name: "Dashboard" }).waitFor()

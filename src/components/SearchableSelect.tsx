@@ -187,8 +187,15 @@ export function SearchableSelect({
   const noResults =
     open && filtered.length === 0 && normalizeSearchQuery(query) !== ''
 
+  const wrapOpen = open && !disabled
+
   const control = (
-    <div ref={wrapRef} className="searchable-select-wrap">
+    <div
+      ref={wrapRef}
+      className={
+        wrapOpen ? 'searchable-select-wrap searchable-select-wrap--open' : 'searchable-select-wrap'
+      }
+    >
       <input
         ref={inputRef}
         id={id}
@@ -229,7 +236,7 @@ export function SearchableSelect({
         onKeyDown={onInputKeyDown}
       />
 
-      {open && !disabled && (
+      {wrapOpen && (
         <div
           id={listboxId}
           role="listbox"

@@ -11,9 +11,7 @@ export function PageHeader({ title, subtitle, error, children }: PageHeaderProps
   return (
     <>
       <h1>{title}</h1>
-      {subtitle && (
-        <p style={{ marginTop: '0.5rem', color: 'var(--text-muted)' }}>{subtitle}</p>
-      )}
+      {subtitle && <p className="page-header-subtitle">{subtitle}</p>}
       {error && (
         <div className="page-error" role="alert" aria-live="assertive">
           {error}
