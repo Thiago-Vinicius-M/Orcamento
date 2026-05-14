@@ -25,7 +25,7 @@ Teste via signup (opcional, mas recomendado):
 
 - `TEST_EMAIL` (e-mail que deve receber o link)
 - `TEST_PASSWORD` (senha para o usuário de teste)
-- `TEST_EMAIL_REDIRECT_TO` (opcional; default `http://localhost:5173/configuracoes`)
+- `TEST_EMAIL_REDIRECT_TO` (opcional; default `http://localhost:5173/auth/confirm-callback`)
 - `SKIP_SIGNUP_TEST` (opcional; `true` para só configurar o SMTP)
 
 ## Validação

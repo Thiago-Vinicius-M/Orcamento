@@ -21,7 +21,7 @@ describe('cadastro gerente (cliente Supabase fake)', () => {
         username: 'admin',
         email: 'novo@empresa.example',
         password: 'secret',
-        emailRedirectTo: 'https://app.example/configuracoes',
+        emailRedirectTo: 'https://app.example/auth/confirm-callback',
       },
     })
 

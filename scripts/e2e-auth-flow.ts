@@ -75,7 +75,7 @@ async function main() {
   const SUPABASE_SERVICE_ROLE_KEY = requiredEnv('SUPABASE_SERVICE_ROLE_KEY')
   const TEST_EMAIL = requiredEnv('TEST_EMAIL')
   const TEST_PASSWORD = requiredEnv('TEST_PASSWORD')
-  const REDIRECT_BASE = process.env.TEST_EMAIL_REDIRECT_TO ?? 'http://localhost:5173/configuracoes'
+  const REDIRECT_BASE = process.env.TEST_EMAIL_REDIRECT_TO ?? 'http://localhost:5173/auth/confirm-callback'
   const cleanup = (process.env.CLEANUP ?? '').toLowerCase() === 'true'
 
   const runId = randomUUID().slice(0, 8)

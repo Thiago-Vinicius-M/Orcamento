@@ -30,7 +30,7 @@ const main = async () => {
   const SMTP_SENDER_NAME = process.env.SMTP_SENDER_NAME ?? 'NewOrca'
   const TEST_EMAIL = process.env.TEST_EMAIL
   const TEST_PASSWORD = process.env.TEST_PASSWORD
-  const TEST_EMAIL_REDIRECT_TO = process.env.TEST_EMAIL_REDIRECT_TO ?? 'http://localhost:5173/configuracoes'
+  const TEST_EMAIL_REDIRECT_TO = process.env.TEST_EMAIL_REDIRECT_TO ?? 'http://localhost:5173/auth/confirm-callback'
   const SKIP_SIGNUP_TEST = (process.env.SKIP_SIGNUP_TEST ?? '').toLowerCase() === 'true'
 
   if (!Number.isFinite(SMTP_PORT_NUM) || SMTP_PORT_NUM <= 0 || !Number.isInteger(SMTP_PORT_NUM)) {

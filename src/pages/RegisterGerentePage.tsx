@@ -6,6 +6,7 @@ import { setPreferredLogin } from '../auth/preferredLogin'
 import { buildRegisterGerenteErrorMessage } from '../auth/errors'
 import { useAuthFlow } from '../auth/useAuthFlow'
 import { parseFunctionsError } from '../lib/errors'
+import { resolveAuthRedirectBase } from '../lib/resolveAuthRedirectBase'
 import { useSupabase } from '../lib/useSupabase'
 
 type Step = 'signup' | 'check-email'
@@ -18,8 +19,7 @@ export function RegisterGerentePage() {
     'Erro inesperado ao criar conta.',
   )
 
-  const authRedirectBase =
-    (import.meta.env.VITE_AUTH_REDIRECT_BASE as string | undefined) ?? window.location.origin
+  const authRedirectBase = resolveAuthRedirectBase(window.location.origin)
 
   const [form, setForm] = useState({
     razaoSocial: '',
@@ -79,7 +79,7 @@ export function RegisterGerentePage() {
 
     await run(async () => {
       // Supabase exige que o `emailRedirectTo` esteja em `Site URL`/`Allowed Redirect URLs`.
-      const emailRedirectTo = new URL('/configuracoes', authRedirectBase).toString()
+      const emailRedirectTo = new URL('/auth/confirm-callback', authRedirectBase).toString()
 
       const { data: registerData, error: registerError } = await supabaseClient.functions.invoke(
         'register-gerente',

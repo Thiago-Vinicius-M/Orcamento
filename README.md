@@ -136,8 +136,10 @@ Use `.env.example` como base.
 
 ### Variáveis de redirect (auth)
 
-- **`VITE_AUTH_REDIRECT_BASE`** (opcional): base para montar o `emailRedirectTo` do signup do gerente  
-  - default: `window.location.origin`
+- **`VITE_AUTH_REDIRECT_BASE`** (opcional): origem para montar o `emailRedirectTo` do signup do gerente (`/auth/confirm-callback` em cima dela).  
+  - default: `window.location.origin` (quem se cadastra em `https://neworca.vercel.app` já gera link correto **sem** essa variável).  
+  - **Vite embute `VITE_*` no build**: no [Vercel](https://vercel.com/), crie a variável para o ambiente **Production**, salve e faça um **novo deploy** (se o link do e-mail não mudar, use *Redeploy* sem cache).  
+  - Aceita só o host (ex.: `neworca.vercel.app`); aspas no valor são ignoradas.
 
 ### Servidor PDF (opcional)
 
@@ -216,7 +218,7 @@ Como atalho, há o script `npm run supabase:deploy:functions`, que faz o deploy 
 
 Veja `SUPABASE_ALLOWED_REDIRECT_URLS.md`. Para dev local, garanta que exista:
 
-- `http://localhost:5173/configuracoes`
+- `http://localhost:5173/auth/confirm-callback`
 
 No Dashboard: Authentication → URL Configuration → Site URL / Allowed Redirect URLs.
 
@@ -299,7 +301,7 @@ curl http://localhost:3333/health
 - [ ] `.env` preenchido com `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`
 - [ ] Migrações aplicadas no Supabase (tabelas e RLS criadas)
 - [ ] Edge Functions deployadas (ou servidas localmente)
-- [ ] Redirect URLs configuradas para o `emailRedirectTo` do signup
+- [ ] Redirect URLs configuradas para o `emailRedirectTo` do signup (`/auth/confirm-callback` na origem do app)
 - [ ] App abre em `http://localhost:5173`
 - [ ] Cadastro de gerente cria conta e retorna `login_code` numérico sequencial (`1`, `2`, `3`, ...) ou chega e-mail de confirmação
 - [ ] Login (gerente ou vendedor) funciona

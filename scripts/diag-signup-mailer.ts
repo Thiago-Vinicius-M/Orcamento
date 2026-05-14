@@ -51,7 +51,7 @@ async function main() {
 
   const runId = randomUUID().slice(0, 6)
   const aliasEmail = TEST_EMAIL.replace('@', `+diag${runId}@`)
-  const redirectTo = process.env.TEST_EMAIL_REDIRECT_TO ?? 'http://localhost:5173/configuracoes'
+  const redirectTo = process.env.TEST_EMAIL_REDIRECT_TO ?? 'http://localhost:5173/auth/confirm-callback'
 
   console.log(`[DIAG] runId=${runId}`)
   console.log(`[DIAG] target email (alias com +): ${aliasEmail}`)

@@ -111,23 +111,71 @@ supabase functions deploy register-gerente
 
 (O CLI aplica `verify_jwt` a partir do `config.toml`. Em último caso: `supabase functions deploy register-gerente --no-verify-jwt`.)
 
+**Allowed Redirect URLs:** o cadastro envia `emailRedirectTo` com o path `/auth/confirm-callback` na origem do app. No Supabase (**Authentication → URL Configuration**), inclua essa URL completa para cada ambiente (local, preview, produção). Lista de exemplos: [`SUPABASE_ALLOWED_REDIRECT_URLS.md`](SUPABASE_ALLOWED_REDIRECT_URLS.md).
+
 ## 3) Template de e-mail “Confirm sign up”
 
 O `login_code` da empresa é uma string numérica sequencial (`1`, `2`, `3`, ...) gerada pelo banco via `bigint generated always as identity` em `companies` — sem prefixo (`NEWORCA01` etc.) e sem zero-padding. O template renderiza esse valor exatamente como vem do banco.
 
-Para o e-mail mostrar `{{ .Data.login_code }}`, rode no projeto (com `SUPABASE_ACCESS_TOKEN`):
+### Logo no e-mail (PNG por HTTPS)
 
-```bash
-npx tsx scripts/setup-supabase-auth-templates.ts
+O repositório inclui [`public/email/logo-orca.png`](public/email/logo-orca.png) (cópia de `src/assets/img/logoOrca.png`) para uso em `<img src="…">` no HTML do template do Supabase. O arquivo precisa ir para produção **no deploy do front** (pasta `public/` do Vite vira raiz estática); sem isso a URL da imagem retorna 404.
+
+**URL absoluta em produção** (substitua pela origem real do site, alinhada ao que você usa em `VITE_AUTH_REDIRECT_BASE` — apenas `https` + host, sem path de rota):
+
+`https://<sua-origem-producao>/email/logo-orca.png`
+
+Exemplo: se `VITE_AUTH_REDIRECT_BASE` for `https://neworca.vercel.app`, a imagem fica em `https://neworca.vercel.app/email/logo-orca.png`.
+
+Clientes de e-mail costumam bloquear ou renderizar mal SVG em `<img>`; o fluxo suportado aqui é **PNG** neste caminho. `public/favicon.svg` pode ser citado como alternativa, com risco em Outlook antigo e alguns webmails.
+
+### Variáveis `CONFIRMATION_*` (opcional)
+
+O script [`scripts/setup-supabase-auth-templates.ts`](scripts/setup-supabase-auth-templates.ts) envia assunto e HTML para a Management API. Por padrão usa valores embutidos no repositório.
+
+- **`CONFIRMATION_SUBJECT`**: uma linha (assunto). Se ausente, usa o padrão do script.
+- **`CONFIRMATION_CONTENT`**: HTML completo do corpo. Se ausente, usa o HTML padrão (tabela, CTA, fallback de link). Qualquer override **deve** conter os literais `{{ .Data.login_code }}` e `{{ .ConfirmationURL }}` — o script aborta se faltar um deles.
+- **`.env` e HTML longo**: o carregamento opcional de `.env` no script trata **uma linha por variável**. Para sobrescrever `CONFIRMATION_CONTENT` com HTML grande, use uma única linha minificada no `.env` ou defina a variável no CI/shell (`export CONFIRMATION_CONTENT='…'`) onde multilinha é aceita. Detalhes também em [`.env.example`](.env.example).
+- **Logo no HTML padrão**: com `VITE_AUTH_REDIRECT_BASE` definido no ambiente ao rodar o script (por exemplo no mesmo `.env` que o script lê), o template padrão inclui `<img src="<origem>/email/logo-orca.png">`. Sem isso, o padrão cai em um cabeçalho textual “NewOrca”.
+
+### Aplicar o template (com token)
+
+O patch usa `SUPABASE_URL` (para derivar o `project ref`) e **`SUPABASE_ACCESS_TOKEN`** (PAT da conta; veja secção **0**). Exemplos:
+
+```powershell
+$env:SUPABASE_ACCESS_TOKEN = "sbp_<personal-access-token>"
+npm run supabase:auth-templates
 ```
 
+```bash
+export SUPABASE_ACCESS_TOKEN="sbp_<personal-access-token>"
+npm run supabase:auth-templates
+```
+
+Equivalente: `npx tsx scripts/setup-supabase-auth-templates.ts`.
+
 Ou edite manualmente em **Authentication → Email Templates → Confirm sign up**.
+
+### Checklist de verificação do e-mail
+
+Depois de aplicar o template e publicar o front com `public/email/logo-orca.png`:
+
+- [ ] Fluxo real: **novo cadastro** (signup) ou **reenvio** do e-mail de confirmação (tipo signup), conforme o fluxo do app.
+- [ ] **Gmail** (web e/ou app): layout legível, imagem carrega, botão e link de confirmação abrem o destino correto.
+- [ ] **Outlook** (web e/ou cliente Windows): mesmo critério — Outlook costuma ser o mais rigoroso com HTML em tabela.
+- [ ] **Mobile** (cliente nativo ou webmail no telefone): sem overflow estranho; CTA tocável.
+- [ ] **Imagem**: `https://<origem-produção>/email/logo-orca.png` abre no navegador e aparece no corpo do e-mail (não bloqueada como domínio desconhecido em testes rápidos).
+- [ ] **Link**: `{{ .ConfirmationURL }}` funciona; o parágrafo de fallback com URL visível também.
+- [ ] **Código**: `{{ .Data.login_code }}` aparece destacado e legível (monoespaçado no template padrão).
 
 ## 4) Checklist rápido
 
 - [ ] Migrações aplicadas no projeto remoto
 - [ ] `register-gerente` deployada + secrets (`URL`, `ANON`, `SERVICE_ROLE`)
-- [ ] Template de confirmação com `{{ .Data.login_code }}`
+- [ ] **Allowed Redirect URLs** com `…/auth/confirm-callback` para cada origem usada (ver `SUPABASE_ALLOWED_REDIRECT_URLS.md`)
+- [ ] Template de confirmação com `{{ .Data.login_code }}` e `{{ .ConfirmationURL }}` (script `npm run supabase:auth-templates` com `SUPABASE_ACCESS_TOKEN`, ou edição manual no Dashboard)
+- [ ] Logo do template: URL `https://<origem-produção>/email/logo-orca.png` abre no navegador (arquivo em `public/email/` incluído no deploy do front)
+- [ ] E-mail testado em **Gmail**, **Outlook** e **mobile** (imagem, link de confirmação e código legível)
 - [ ] SMTP configurado (se usar Gmail, ver `scripts/setup-supabase-smtp-gmail.ts`)
 
 ## 5) Reparo em tempo de execução
