@@ -54,7 +54,7 @@ function getAssetsOriginFromEnv(): string | null {
 
 function buildDefaultConfirmationContent(assetsOrigin: string | null): string {
   const logoBlock = assetsOrigin
-    ? `<tr><td align="center" style="padding:28px 24px 8px;"><img src="${assetsOrigin}/email/logo-orca.png" alt="NewOrca" width="120" height="120" border="0" style="display:block;margin:0 auto;border:0;outline:none;text-decoration:none;" /></td></tr>`
+    ? `<tr><td align="center" style="padding:28px 24px 8px;"><img src="${assetsOrigin}/email/logo-orca.png" alt="NewOrca" width="90" height="50" border="0" style="display:block;margin:0 auto;border:0;outline:none;text-decoration:none;" /></td></tr>`
     : `<tr><td align="center" style="padding:28px 24px 8px;font-family:system-ui,Segoe UI,Helvetica,Arial,sans-serif;font-size:22px;font-weight:700;color:${EMAIL_TEXT};letter-spacing:-0.02em;">NewOrca</td></tr>`
 
   return [
