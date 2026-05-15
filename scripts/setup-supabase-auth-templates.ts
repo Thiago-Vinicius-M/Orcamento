@@ -53,9 +53,18 @@ function getAssetsOriginFromEnv(): string | null {
 }
 
 function buildDefaultConfirmationContent(assetsOrigin: string | null): string {
-  const logoBlock = assetsOrigin
-    ? `<tr><td align="center" style="padding:28px 24px 8px;"><img src="${assetsOrigin}/email/logo-orca.png" alt="NewOrca" width="90" height="50" border="0" style="display:block;margin:0 auto;border:0;outline:none;text-decoration:none;" /></td></tr>`
-    : `<tr><td align="center" style="padding:28px 24px 8px;font-family:system-ui,Segoe UI,Helvetica,Arial,sans-serif;font-size:22px;font-weight:700;color:${EMAIL_TEXT};letter-spacing:-0.02em;">NewOrca</td></tr>`
+  if (!assetsOrigin) {
+    throw new Error(
+      'VITE_AUTH_REDIRECT_BASE é obrigatório para gerar o link de verificação sem expor a URL do Supabase. ' +
+      'Defina-o no .env e re-execute o script.',
+    )
+  }
+
+  // Link aponta para o próprio domínio do app — sem expor a URL interna do Supabase.
+  // O token_hash é de uso único e expira em ~1h.
+  const verifyUrl = `${assetsOrigin}/auth/verify?token_hash={{ .TokenHash }}&type=signup`
+
+  const logoBlock = `<tr><td align="center" style="padding:28px 24px 8px;"><img src="${assetsOrigin}/email/logo-orca.png" alt="NewOrca" width="90" height="50" border="0" style="display:block;margin:0 auto;border:0;outline:none;text-decoration:none;" /></td></tr>`
 
   return [
     `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:${EMAIL_PAGE_BG};margin:0;padding:24px 12px;">`,
@@ -72,12 +81,12 @@ function buildDefaultConfirmationContent(assetsOrigin: string | null): string {
     '</td></tr>',
     '<tr><td align="center" style="padding:8px 32px 24px;">',
     `<table role="presentation" cellspacing="0" cellpadding="0" border="0"><tr><td align="center" bgcolor="${EMAIL_PRIMARY}" style="background-color:${EMAIL_PRIMARY};border-radius:8px;mso-padding-alt:14px 28px;">`,
-    `<a href="{{ .ConfirmationURL }}" style="display:inline-block;padding:14px 28px;font-family:system-ui,Segoe UI,Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:${EMAIL_WHITE};text-decoration:none;border-radius:8px;">Confirmar e-mail</a>`,
+    `<a href="${verifyUrl}" style="display:inline-block;padding:14px 28px;font-family:system-ui,Segoe UI,Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:${EMAIL_WHITE};text-decoration:none;border-radius:8px;">Confirmar e-mail</a>`,
     '</td></tr></table>',
     '</td></tr>',
     `<tr><td style="padding:0 32px 28px;font-family:system-ui,Segoe UI,Helvetica,Arial,sans-serif;font-size:13px;color:${EMAIL_MUTED};line-height:1.6;">`,
     'Se o botão não funcionar, copie e cole este link no navegador:<br />',
-    `<a href="{{ .ConfirmationURL }}" style="color:${EMAIL_PRIMARY};word-break:break-all;">{{ .ConfirmationURL }}</a>`,
+    `<a href="${verifyUrl}" style="color:${EMAIL_PRIMARY};word-break:break-all;">${verifyUrl}</a>`,
     '</td></tr>',
     '</table>',
     '</td></tr></table>',
@@ -110,9 +119,9 @@ const main = async () => {
     )
   }
 
-  if (!CONFIRMATION_CONTENT.includes('{{ .ConfirmationURL }}')) {
+  if (!CONFIRMATION_CONTENT.includes('{{ .TokenHash }}')) {
     throw new Error(
-      'CONFIRMATION_CONTENT must include "{{ .ConfirmationURL }}" so users can open the confirmation link.',
+      'CONFIRMATION_CONTENT must include "{{ .TokenHash }}" so the verify link can be built without exposing the Supabase URL.',
     )
   }
 
@@ -145,7 +154,7 @@ const main = async () => {
 
   console.log('[AUTH TEMPLATES] Patch OK. Template "Confirm sign up" atualizado.')
   console.log(
-    '[AUTH TEMPLATES] Confirm sign up includes "{{ .Data.login_code }}" and "{{ .ConfirmationURL }}".',
+    '[AUTH TEMPLATES] Confirm sign up: link aponta para o domínio do app via "{{ .TokenHash }}" — sem URL do Supabase exposta.',
   )
 }
 

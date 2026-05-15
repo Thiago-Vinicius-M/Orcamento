@@ -23,6 +23,9 @@ const AuthConfirmCallbackPage = lazy(() =>
 const AuthResetPasswordPage = lazy(() =>
   import('./pages/AuthResetPasswordPage').then(m => ({ default: m.AuthResetPasswordPage })),
 )
+const AuthVerifyPage = lazy(() =>
+  import('./pages/AuthVerifyPage').then(m => ({ default: m.AuthVerifyPage })),
+)
 
 const SuspenseFallback = <LoadingState message="Carregando página..." />
 
@@ -53,6 +56,14 @@ export default function App() {
           element={
             <LazyRoute fallback={SuspenseFallback}>
               <AuthConfirmCallbackPage />
+            </LazyRoute>
+          }
+        />
+        <Route
+          path="/auth/verify"
+          element={
+            <LazyRoute fallback={SuspenseFallback}>
+              <AuthVerifyPage />
             </LazyRoute>
           }
         />
