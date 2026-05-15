@@ -160,6 +160,13 @@ export function RegisterGerentePage() {
   return (
     <div className="auth-container">
       <div className="auth-card">
+        <button
+          type="button"
+          className="auth-back-btn"
+          onClick={() => navigate('/login-gerente')}
+        >
+        Voltar ao login
+        </button>
         <h1>Criar conta (Gerente)</h1>
         <p style={{ marginTop: '0.5rem', color: 'var(--text-muted)' }}>
           Cadastre a empresa e o e-mail do gerente. Um link de confirmação será enviado para você

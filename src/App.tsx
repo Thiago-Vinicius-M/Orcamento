@@ -14,12 +14,14 @@ const OrcamentoDetalhePage = lazy(() => import('./pages/OrcamentoDetalhePage').t
 const OrcamentoNovoPage = lazy(() => import('./pages/OrcamentoNovoPage').then(m => ({ default: m.OrcamentoNovoPage })))
 const OrcamentosPage = lazy(() => import('./pages/OrcamentosPage').then(m => ({ default: m.OrcamentosPage })))
 const ProdutosPage = lazy(() => import('./pages/ProdutosPage').then(m => ({ default: m.ProdutosPage })))
-const LoginGerentePage = lazy(() => import('./pages/LoginGerentePage').then(m => ({ default: m.LoginGerentePage })))
-const LoginVendedorPage = lazy(() => import('./pages/LoginVendedorPage').then(m => ({ default: m.LoginVendedorPage })))
+const LoginPage = lazy(() => import('./pages/LoginPage').then(m => ({ default: m.LoginPage })))
 const RegisterGerentePage = lazy(() => import('./pages/RegisterGerentePage').then(m => ({ default: m.RegisterGerentePage })))
 const VendedoresPage = lazy(() => import('./pages/VendedoresPage').then(m => ({ default: m.VendedoresPage })))
 const AuthConfirmCallbackPage = lazy(() =>
   import('./pages/AuthConfirmCallbackPage').then(m => ({ default: m.AuthConfirmCallbackPage })),
+)
+const AuthResetPasswordPage = lazy(() =>
+  import('./pages/AuthResetPasswordPage').then(m => ({ default: m.AuthResetPasswordPage })),
 )
 
 const SuspenseFallback = <LoadingState message="Carregando página..." />
@@ -34,7 +36,7 @@ export default function App() {
           path="/login-gerente"
           element={
             <LazyRoute fallback={SuspenseFallback}>
-              <LoginGerentePage />
+              <LoginPage initialTab="gerente" />
             </LazyRoute>
           }
         />
@@ -42,7 +44,7 @@ export default function App() {
           path="/login-vendedor"
           element={
             <LazyRoute fallback={SuspenseFallback}>
-              <LoginVendedorPage />
+              <LoginPage initialTab="vendedor" />
             </LazyRoute>
           }
         />
@@ -51,6 +53,14 @@ export default function App() {
           element={
             <LazyRoute fallback={SuspenseFallback}>
               <AuthConfirmCallbackPage />
+            </LazyRoute>
+          }
+        />
+        <Route
+          path="/auth/reset-password"
+          element={
+            <LazyRoute fallback={SuspenseFallback}>
+              <AuthResetPasswordPage />
             </LazyRoute>
           }
         />

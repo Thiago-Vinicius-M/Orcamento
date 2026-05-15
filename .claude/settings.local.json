@@ -8,7 +8,10 @@
       "Bash(grep -c \"^\\\\\\\\.\" e:/Projetos/NewOrca/src/styles/global.css)",
       "Bash(Get-ChildItem -Path \"e:\\\\Projetos\\\\NewOrca\\\\src\" -Directory)",
       "Bash(Select-Object Name)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(Get-ChildItem -Path \"e:\\\\Projetos\\\\NewOrca\\\\src\\\\auth\\\\\" -Filter \"*.ts\" -o \"*.tsx\" | Select-Object -ExpandProperty Name)",
+      "Bash(Get-ChildItem -Path \"e:\\\\Projetos\\\\NewOrca\" -Recurse -Directory -Filter \"auth\")",
+      "Bash(Select-Object -ExpandProperty FullName)"
     ]
   }
 }
