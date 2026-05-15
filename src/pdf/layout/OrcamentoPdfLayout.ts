@@ -1,5 +1,6 @@
-import { PDFDocument, type PDFFont } from "pdf-lib";
+import { PDFDocument, type PDFFont, type PDFImage } from "pdf-lib";
 import { embedPdfFonts } from "../orcamentoPdfFontLoader";
+import { loadLogoForPdf } from "../orcamentoPdfLogoLoader";
 import type { OrcamentoPdfViewModel } from "../orcamentoPdfPresenter";
 import { PdfPainter } from "../PdfPainter";
 import { PdfPageContext } from "../PdfPageContext";
@@ -25,6 +26,14 @@ export async function renderOrcamentoPdfLayout(
 ): Promise<Uint8Array> {
   const pdfDoc = await PDFDocument.create();
   const { fontTitle, fontNormal } = await embedPdfFonts(pdfDoc);
+
+  const logoData = await loadLogoForPdf(model.logoUrl);
+  const embeddedLogo: PDFImage | null = logoData
+    ? logoData.format === 'png'
+      ? await pdfDoc.embedPng(logoData.bytes)
+      : await pdfDoc.embedJpg(logoData.bytes)
+    : null;
+
   const painter = new PdfPainter(fontTitle, fontNormal);
   const m = 48;
   const lh = 14;
@@ -52,6 +61,7 @@ export async function renderOrcamentoPdfLayout(
     fontNormal,
     painter,
     gap,
+    logo: embeddedLogo ?? undefined,
   });
 
   ctx = drawOrcamentoPdfItemsSection(ctx, model, {

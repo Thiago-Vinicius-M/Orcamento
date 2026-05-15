@@ -25,6 +25,7 @@ export type OrcamentoPdfEmpresaRow = {
   email_contato: string | null
   telefone_contato: string | null
   endereco: string | null
+  logo_url: string | null
 }
 
 export type OrcamentoPdfClienteRow = {
@@ -121,6 +122,8 @@ function mapOrcamentoPdfDataFromRows(
           : String(empresaNested.telefone_contato),
       endereco:
         empresaNested.endereco === null || empresaNested.endereco === undefined ? null : String(empresaNested.endereco),
+      logo_url:
+        empresaNested.logo_url === null || empresaNested.logo_url === undefined ? null : String(empresaNested.logo_url),
     },
     cliente: {
       nome: String(clienteNested.nome ?? ''),
@@ -180,7 +183,8 @@ export async function loadOrcamentoPdfDataWithClient(
             cnpj,
             email_contato,
             telefone_contato,
-            endereco
+            endereco,
+            logo_url
           )
         `,
       )

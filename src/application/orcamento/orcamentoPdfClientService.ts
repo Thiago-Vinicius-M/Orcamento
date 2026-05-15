@@ -1,6 +1,8 @@
 import { z } from 'zod'
 
+import { resolveCompanyLogoSignedUrl, toCompanyLogoPath } from '../../domain/empresa/companyLogo'
 import { isOrcamentoStatus } from '../../domain/orcamento/status'
+import { getDefaultSupabase } from '../../lib/supabaseClient'
 import { gerarPdfOrcamento } from '../../pdf/orcamentoPdf'
 import {
   loadOrcamentoPdfData,
@@ -136,12 +138,17 @@ export async function gerarEBaixarPdfOrcamento(orcamentoId: string): Promise<voi
     throw new Error(msg === '' ? 'Não foi possível carregar o orçamento.' : msg)
   }
 
+  const rawLogoPath = dadosRaw.empresa.logo_url
+  const logoUrl = rawLogoPath
+    ? await resolveCompanyLogoSignedUrl(getDefaultSupabase(), toCompanyLogoPath(rawLogoPath), 300).catch(() => null)
+    : null
+
   const mapeado = mapPdfRawToOrcamento(dadosRaw)
   const orcamento = parseOrcamentoComFeedback(mapeado)
 
   let bytes: Uint8Array
   try {
-    bytes = await gerarPdfOrcamento(orcamento)
+    bytes = await gerarPdfOrcamento(orcamento, { logoUrl: logoUrl ?? undefined })
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
     throw new Error(msg === '' ? 'Falha ao gerar o PDF.' : `Falha ao gerar o PDF: ${msg}`)

@@ -80,6 +80,10 @@ function baseOrcamento(partial: Partial<Orcamento>): Orcamento {
   return OrcamentoSchema.parse(raw)
 }
 
+// PNG 1×1 mínimo válido — usado para testar embed de logo sem acesso à rede
+const TINY_PNG_DATA_URL =
+  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwADhQGAWjR9awAAAABJRU5ErkJggg=='
+
 const casos = {
   financiamentoComTaxa: baseOrcamento({
     pagamento: {
@@ -118,6 +122,9 @@ const casos = {
   }),
 } satisfies Record<string, Orcamento>
 
+// Caso com logo: orcamento padrão + data URL de PNG 1×1 passada via opts
+const casoComLogo = { orcamento: baseOrcamento({}), logoUrl: TINY_PNG_DATA_URL }
+
 describe('orcamentoPdf caracterização (Fase 0)', () => {
   it('Roboto TTF fixtures estão disponíveis para PDF determinístico', async () => {
     await assertRobotoFontsReadable()
@@ -137,5 +144,18 @@ describe('orcamentoPdf caracterização (Fase 0)', () => {
     const bytes = await renderizarOrcamentoPdf(vm, { freezeDocumentDates: true })
     const hex = sha256Hex(bytes)
     expect(hex).toBe((baselineHashes as Record<string, string>)[id])
+  })
+
+  it('ViewModel snapshot comLogo', () => {
+    const vm = apresentarOrcamentoPdf(casoComLogo.orcamento, { logoUrl: casoComLogo.logoUrl })
+    expect(vm.logoUrl).toBe(TINY_PNG_DATA_URL)
+    expect(vm).toMatchSnapshot('viewModel-comLogo')
+  })
+
+  it('PDF bytes hash SHA-256 comLogo', async () => {
+    const vm = apresentarOrcamentoPdf(casoComLogo.orcamento, { logoUrl: casoComLogo.logoUrl })
+    const bytes = await renderizarOrcamentoPdf(vm, { freezeDocumentDates: true })
+    const hex = sha256Hex(bytes)
+    expect(hex).toBe((baselineHashes as Record<string, string>)['comLogo'])
   })
 })

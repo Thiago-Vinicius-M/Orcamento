@@ -36,19 +36,26 @@ export function drawOrcamentoPdfPaymentAndTermsSection(
 
   c.page.drawText("PAGAMENTO", { x: margin, y: sectionY, size: 8, font: fontTitle, color: PDF_PRIMARY });
   let py = sectionY - 14;
-  const payLines = model.pagamentoResumo.split(" | ").map((s) => s.trim());
-  for (const ln of payLines) {
-    c.page.drawText(ln, { x: margin, y: py, size: 8.5, font: fontNormal, color: PDF_TEXT_DARK });
-    py -= 11;
+  for (const detalhe of model.pagamentoDetalhes) {
+    if (detalhe.tipo === "titulo") {
+      c.page.drawText(detalhe.texto, { x: margin, y: py, size: 9, font: fontTitle, color: PDF_PRIMARY });
+      py -= 13;
+    } else {
+      const linha = `${detalhe.rotulo}: ${detalhe.valor}`;
+      c.page.drawText(linha, { x: margin, y: py, size: 8.5, font: fontNormal, color: PDF_TEXT_DARK });
+      py -= 11;
+    }
   }
 
   let ry = sectionY;
-  c.page.drawText("CONTATO", { x: rightX, y: ry, size: 8, font: fontTitle, color: PDF_PRIMARY });
-  ry -= 14;
-  const contactParts = model.rodape.contato ? model.rodape.contato.split(" | ") : [];
-  for (const part of contactParts) {
-    c.page.drawText(part, { x: rightX, y: ry, size: 8.5, font: fontNormal, color: PDF_TEXT_DARK });
-    ry -= 11;
+  const empresaLinhas = [model.empresaNome, ...model.empresaLinhas];
+  if (empresaLinhas.length > 0) {
+    c.page.drawText("EMPRESA", { x: rightX, y: ry, size: 8, font: fontTitle, color: PDF_PRIMARY });
+    ry -= 14;
+    for (const linha of empresaLinhas) {
+      c.page.drawText(linha, { x: rightX, y: ry, size: 8.5, font: fontNormal, color: PDF_TEXT_DARK });
+      ry -= 11;
+    }
   }
 
   c = { ...c, cursorY: Math.min(py, ry) - 20 };

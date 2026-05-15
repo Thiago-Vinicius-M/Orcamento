@@ -295,7 +295,7 @@ select.input-control,
   align-items: center;
   justify-content: center;
   gap: 0.35rem;
-  border-radius: 999px;
+  border-radius: 600px;
   padding: 0.4rem 1.3rem;
   border: none;
   background: linear-gradient(120deg, var(--accent-blue));
@@ -306,6 +306,28 @@ select.input-control,
 }
 
 .btn-primary:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
+.btn-primary-vend {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  border-radius: 100px;
+  padding: 1rem 1rem;
+  border: none;
+  background: linear-gradient(120deg, var(--accent-blue));
+  color: white;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  height: 60px;
+  
+}
+
+.btn-primary-vend:disabled {
   opacity: 0.7;
   cursor: default;
 }
@@ -1213,7 +1235,7 @@ h2 {
   }
 
   .card {
-    padding: 0.85rem 0.75rem;
+    padding: 0.75rem;
     border-radius: var(--radius-sm);
   }
 
@@ -1222,7 +1244,7 @@ h2 {
   }
 
   .btn-primary {
-    padding: 0.5rem 1rem;
+    padding: 0.1rem 1rem;
     font-size: 0.875rem;
   }
 

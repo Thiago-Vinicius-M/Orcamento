@@ -34,6 +34,12 @@ exports[`orcamentoPdf caracterização (Fase 0) > ViewModel snapshot 'aVistaDinh
   ],
   "observacoes": "Observação de teste para caracterização.",
   "orcamentoNumero": "Nº 2024-099",
+  "pagamentoDetalhes": [
+    {
+      "texto": "À vista — Dinheiro",
+      "tipo": "titulo",
+    },
+  ],
   "pagamentoResumo": "Forma: dinheiro",
   "rodape": {
     "contato": "(11) 3000-0000 | contato@fixtures.example",
@@ -90,6 +96,12 @@ exports[`orcamentoPdf caracterização (Fase 0) > ViewModel snapshot 'descontoFi
   ],
   "observacoes": "Observação de teste para caracterização.",
   "orcamentoNumero": "Nº 2024-099",
+  "pagamentoDetalhes": [
+    {
+      "texto": "À vista — Dinheiro",
+      "tipo": "titulo",
+    },
+  ],
   "pagamentoResumo": "Forma: dinheiro",
   "rodape": {
     "contato": "(11) 3000-0000 | contato@fixtures.example",
@@ -146,6 +158,12 @@ exports[`orcamentoPdf caracterização (Fase 0) > ViewModel snapshot 'descontoPe
   ],
   "observacoes": "Observação de teste para caracterização.",
   "orcamentoNumero": "Nº 2024-099",
+  "pagamentoDetalhes": [
+    {
+      "texto": "À vista — Dinheiro",
+      "tipo": "titulo",
+    },
+  ],
   "pagamentoResumo": "Forma: dinheiro",
   "rodape": {
     "contato": "(11) 3000-0000 | contato@fixtures.example",
@@ -202,6 +220,37 @@ exports[`orcamentoPdf caracterização (Fase 0) > ViewModel snapshot 'financiame
   ],
   "observacoes": "Observação de teste para caracterização.",
   "orcamentoNumero": "Nº 2024-099",
+  "pagamentoDetalhes": [
+    {
+      "texto": "Financiamento",
+      "tipo": "titulo",
+    },
+    {
+      "rotulo": "Entrada",
+      "tipo": "linha",
+      "valor": "R$ 400,00",
+    },
+    {
+      "rotulo": "Valor financiado",
+      "tipo": "linha",
+      "valor": "R$ 1.600,00",
+    },
+    {
+      "rotulo": "Parcelas",
+      "tipo": "linha",
+      "valor": "8×",
+    },
+    {
+      "rotulo": "Valor por parcela",
+      "tipo": "linha",
+      "valor": "R$ 206,50",
+    },
+    {
+      "rotulo": "Taxa de serviço",
+      "tipo": "linha",
+      "valor": "3,25% (R$ 6,50/parcela)",
+    },
+  ],
   "pagamentoResumo": "Forma: financiamento | Entrada: R$ 400,00 | Valor financiado: R$ 1.600,00 | Taxa serviço: 3.25% | Parcelas: 8 x R$ 206,50 | Incluindo R$ 6,50 de taxa por parcela",
   "rodape": {
     "contato": "(11) 3000-0000 | contato@fixtures.example",
@@ -257,6 +306,75 @@ exports[`orcamentoPdf caracterização (Fase 0) > ViewModel snapshot 'semGeradoP
   ],
   "observacoes": "Observação de teste para caracterização.",
   "orcamentoNumero": "Nº —",
+  "pagamentoDetalhes": [
+    {
+      "texto": "À vista — Dinheiro",
+      "tipo": "titulo",
+    },
+  ],
+  "pagamentoResumo": "Forma: dinheiro",
+  "rodape": {
+    "contato": "(11) 3000-0000 | contato@fixtures.example",
+    "empresaNome": "Empresa Fixtures LTDA",
+  },
+  "status": "Status: VIGENTE",
+  "termosCondicoes": "Os valores e condições deste documento constituem proposta comercial. A aceitação formal do orçamento e o cumprimento da forma de pagamento acordada caracterizam o fechamento do negócio. Mercadorias e prazos ficam sujeitos à disponibilidade e confirmação no momento da contratação.",
+  "tituloDocumento": "Orçamento",
+  "totais": {
+    "descontoValorDisplay": "-R$ 0,00",
+    "descontos": "R$ 0,00",
+    "mostrarDesconto": false,
+    "mostrarTaxa": false,
+    "rotuloDesconto": "",
+    "rotuloTaxa": "",
+    "subtotal": "R$ 2.000,00",
+    "taxas": "R$ 0,00",
+    "total": "R$ 2.000,00",
+  },
+}
+`;
+
+exports[`orcamentoPdf caracterização (Fase 0) > ViewModel snapshot comLogo > viewModel-comLogo 1`] = `
+{
+  "avisoValidade": "Este orçamento é válido somente até a data indicada acima. Valores podem sofrer alteração após o vencimento.",
+  "clienteLinhas": [
+    "Cliente Caracterização",
+    "Documento: 123.456.789-00",
+    "Endereço: Rua das Flores, 42",
+    "Contato: (11) 98888-7777 | cliente@fixtures.example",
+  ],
+  "dataEmissao": "15/01/2024",
+  "dataValidade": "14/02/2024",
+  "empresaLinhas": [
+    "CNPJ/CPF: 12.345.678/0001-90",
+    "Av. Paulista, 1000 — São Paulo/SP",
+    "Contato: (11) 3000-0000 | contato@fixtures.example",
+  ],
+  "empresaNome": "Empresa Fixtures LTDA",
+  "geradoPorLinha": "Gerado por: Fulano da Silva",
+  "itens": [
+    {
+      "descricao": "Serviço de implantação",
+      "precoUnitario": "R$ 500,00",
+      "quantidade": "2",
+      "subtotal": "R$ 1.000,00",
+    },
+    {
+      "descricao": "Licença anual",
+      "precoUnitario": "R$ 1.000,00",
+      "quantidade": "1",
+      "subtotal": "R$ 1.000,00",
+    },
+  ],
+  "logoUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwADhQGAWjR9awAAAABJRU5ErkJggg==",
+  "observacoes": "Observação de teste para caracterização.",
+  "orcamentoNumero": "Nº 2024-099",
+  "pagamentoDetalhes": [
+    {
+      "texto": "À vista — Dinheiro",
+      "tipo": "titulo",
+    },
+  ],
   "pagamentoResumo": "Forma: dinheiro",
   "rodape": {
     "contato": "(11) 3000-0000 | contato@fixtures.example",

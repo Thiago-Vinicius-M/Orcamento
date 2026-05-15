@@ -12,7 +12,18 @@
       "Bash(Get-ChildItem -Path \"e:\\\\Projetos\\\\NewOrca\\\\src\\\\auth\\\\\" -Filter \"*.ts\" -o \"*.tsx\" | Select-Object -ExpandProperty Name)",
       "Bash(Get-ChildItem -Path \"e:\\\\Projetos\\\\NewOrca\" -Recurse -Directory -Filter \"auth\")",
       "Bash(Select-Object -ExpandProperty FullName)",
-      "Bash(Get-ChildItem -Path \"e:\\\\Projetos\\\\NewOrca\\\\src\\\\auth\" -Type File)"
+      "Bash(Get-ChildItem -Path \"e:\\\\Projetos\\\\NewOrca\\\\src\\\\auth\" -Type File)",
+      "Bash(xargs grep -l \"OrcamentoPdfLayout\\\\|PdfPainter\")",
+      "Bash(Get-ChildItem -Path \"e:\\\\Projetos\\\\NewOrca\" -Force)",
+      "Bash(Select-Object Name, FullName)",
+      "Bash(xargs grep -l \"image\\\\|Image\\\\|embed\\\\|draw.*Image\")",
+      "Bash(grep -E \"\\\\.\\(ts|tsx|js\\)$\")",
+      "Bash(xargs grep -l \"PDFImage\\\\|embedImage\\\\|drawImage\")",
+      "Bash(xargs grep -l \"logo\\\\|image\")",
+      "Bash(npm test *)",
+      "Bash(Get-ChildItem -Path \"e:\\\\Projetos\\\\NewOrca\\\\src\\\\pdf\\\\layout\" -Recurse)",
+      "Bash(Select-Object FullName)",
+      "Bash(npx vitest *)"
     ]
   }
 }

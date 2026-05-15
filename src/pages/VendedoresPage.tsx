@@ -305,7 +305,7 @@ export function VendedoresPage() {
             {criarSuccess && <div className="form-success">{criarSuccess}</div>}
 
             <div className="form-actions">
-              <button type="submit" className="btn-primary" disabled={criando}>
+              <button type="submit" className="btn-primary-vend" disabled={criando}>
                 {criando ? 'Criando...' : 'Criar vendedor'}
               </button>
             </div>

@@ -1,8 +1,13 @@
 import { formatDate } from "../domain/datas/data";
 import { formatCurrencyBRL } from "../domain/financeiro/moeda";
+import { calcularResumoFinanciamento } from "../domain/orcamento/calculos";
 import { buildPagamentoResumoPdf, pagamentoFromPdfModel } from "../domain/orcamento/pagamento";
 import { calcularValidade30Dias } from "../domain/orcamento/validade";
 import type { Orcamento } from "../types/orcamento";
+
+export type PagamentoDetalheViewModel =
+  | { tipo: "titulo"; texto: string }
+  | { tipo: "linha"; rotulo: string; valor: string };
 
 export interface OrcamentoPdfItemViewModel {
   descricao: string;
@@ -19,6 +24,8 @@ export interface OrcamentoPdfRodapeViewModel {
 export interface OrcamentoPdfViewModel {
   empresaNome: string;
   empresaLinhas: string[];
+  /** URL da logo da empresa (signed URL ou data URL). Ausente = sem logo no PDF. */
+  logoUrl?: string;
   /** Título principal do documento (ex.: "Orçamento"). */
   tituloDocumento: string;
   /** Identificação do orçamento (ex.: "Nº 2024-001"). */
@@ -43,6 +50,8 @@ export interface OrcamentoPdfViewModel {
     mostrarTaxa: boolean;
   };
   pagamentoResumo: string;
+  /** Detalhes estruturados de pagamento para layout hierárquico no PDF. */
+  pagamentoDetalhes: PagamentoDetalheViewModel[];
   avisoValidade: string;
   /** Texto padrão de termos para o rodapé do PDF. */
   termosCondicoes: string;
@@ -97,10 +106,63 @@ function buildPagamentoResumo(orcamento: Orcamento): string {
   });
 }
 
+const LABELS_PAGAMENTO: Record<string, string> = {
+  dinheiro: "À vista — Dinheiro",
+  pix: "À vista — Pix",
+  debito: "Débito",
+  credito: "Crédito",
+  boleto: "Boleto",
+};
+
+function buildPagamentoDetalhes(orcamento: Orcamento): PagamentoDetalheViewModel[] {
+  const tipo = orcamento.pagamento.tipo;
+
+  if (tipo === "financiamento") {
+    const { entrada, valorFinanciado, parcelas, taxa, aplicarTaxa, valorParcela } =
+      calcularResumoFinanciamento({
+        total: orcamento.total,
+        valor_entrada: orcamento.pagamento.valor_entrada ?? null,
+        num_parcelas: orcamento.pagamento.num_parcelas ?? null,
+        taxa_servico_percentual: orcamento.pagamento.taxa_servico_percentual ?? null,
+        aplicar_taxa: orcamento.pagamento.aplicar_taxa ?? false,
+      });
+
+    const taxaNominalTotal =
+      aplicarTaxa && taxa > 0 ? Math.max(0, valorFinanciado * (taxa / 100)) : 0;
+    const taxaPorParcela =
+      taxaNominalTotal > 0 && parcelas > 0 ? taxaNominalTotal / parcelas : 0;
+
+    const result: PagamentoDetalheViewModel[] = [
+      { tipo: "titulo", texto: "Financiamento" },
+      { tipo: "linha", rotulo: "Entrada", valor: formatCurrency(entrada) },
+      { tipo: "linha", rotulo: "Valor financiado", valor: formatCurrency(valorFinanciado) },
+      { tipo: "linha", rotulo: "Parcelas", valor: `${parcelas}×` },
+      { tipo: "linha", rotulo: "Valor por parcela", valor: formatCurrency(valorParcela) },
+    ];
+
+    if (aplicarTaxa && taxa > 0) {
+      const fmtPct = taxa.toLocaleString("pt-BR", { maximumFractionDigits: 2, minimumFractionDigits: 0 });
+      result.push({
+        tipo: "linha",
+        rotulo: "Taxa de serviço",
+        valor: `${fmtPct}% (${formatCurrency(taxaPorParcela)}/parcela)`,
+      });
+    }
+
+    return result;
+  }
+
+  const label = LABELS_PAGAMENTO[tipo] ?? tipo;
+  return [{ tipo: "titulo", texto: label }];
+}
+
 const TERMOS_PADRAO_PDF =
   "Os valores e condições deste documento constituem proposta comercial. A aceitação formal do orçamento e o cumprimento da forma de pagamento acordada caracterizam o fechamento do negócio. Mercadorias e prazos ficam sujeitos à disponibilidade e confirmação no momento da contratação.";
 
-export function apresentarOrcamentoPdf(orcamento: Orcamento): OrcamentoPdfViewModel {
+export function apresentarOrcamentoPdf(
+  orcamento: Orcamento,
+  opts?: { logoUrl?: string },
+): OrcamentoPdfViewModel {
   const numero = (orcamento.numero ?? "").trim();
   const observacoesTrim = orcamento.observacoes?.trim();
   const observacoes =
@@ -117,6 +179,7 @@ export function apresentarOrcamentoPdf(orcamento: Orcamento): OrcamentoPdfViewMo
 
   return {
     empresaNome: orcamento.empresa.nome,
+    ...(opts?.logoUrl ? { logoUrl: opts.logoUrl } : {}),
     empresaLinhas: [
       orcamento.empresa.documento ? `CNPJ/CPF: ${orcamento.empresa.documento}` : null,
       orcamento.empresa.endereco ?? null,
@@ -156,6 +219,7 @@ export function apresentarOrcamentoPdf(orcamento: Orcamento): OrcamentoPdfViewMo
       mostrarTaxa
     },
     pagamentoResumo: buildPagamentoResumo(orcamento),
+    pagamentoDetalhes: buildPagamentoDetalhes(orcamento),
     termosCondicoes: TERMOS_PADRAO_PDF,
     avisoValidade:
       "Este orçamento é válido somente até a data indicada acima. Valores podem sofrer alteração após o vencimento.",
