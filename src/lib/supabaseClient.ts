@@ -11,7 +11,9 @@ export const SUPABASE_NOT_CONFIGURED_MESSAGE =
 // Para não quebrar o React e ficar branco, exportamos `supabase` como `null`
 // quando as envs não estiverem configuradas.
 export const supabase = supabaseConfigured
-  ? createClient(supabaseUrl as string, supabaseAnonKey as string)
+  ? createClient(supabaseUrl as string, supabaseAnonKey as string, {
+      auth: { flowType: 'pkce' },
+    })
   : null
 
 export type SupabaseStatus =

@@ -28,7 +28,6 @@ async function runUndoStack(stack: Array<() => Promise<void>>): Promise<void> {
  */
 export async function runRegisterGerenteSaga(
   supabaseAdmin: SupabaseClient,
-  supabaseAnon: SupabaseClient,
   body: RegisterGerenteBody,
 ): Promise<RegisterGerenteSagaResult> {
   const undo: Array<() => Promise<void>> = []
@@ -40,7 +39,7 @@ export async function runRegisterGerenteSaga(
   )
   undo.push(() => compensateAllocateCompany(supabaseAdmin, allocation.company_id))
 
-  const authResult = await createGerenteAuthUser(supabaseAdmin, supabaseAnon, body, allocation)
+  const authResult = await createGerenteAuthUser(supabaseAdmin, body, allocation)
   if (!authResult.ok) {
     await runUndoStack(undo)
     return { kind: 'bad_request', message: authResult.errorMessage }

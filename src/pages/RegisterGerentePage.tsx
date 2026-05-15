@@ -90,7 +90,6 @@ export function RegisterGerentePage() {
             username: form.username,
             email: form.email,
             password: form.senha,
-            emailRedirectTo,
           },
         },
       )
@@ -123,6 +122,20 @@ export function RegisterGerentePage() {
       if (reg?.session) {
         setPreferredLogin('gerente')
         navigate('/', { replace: true })
+        return
+      }
+
+      // Dispara o e-mail de confirmação a partir do browser (PKCE):
+      // o SDK gera code_verifier localmente e envia code_challenge ao Supabase,
+      // que embute um `code` de uso único no link — sem expor access_token na URL.
+      const { error: resendError } = await supabaseClient.auth.resend({
+        type: 'signup',
+        email: form.email,
+        options: { emailRedirectTo },
+      })
+
+      if (resendError) {
+        setError(`Conta criada, mas o e-mail de confirmação não pôde ser enviado: ${resendError.message}`)
         return
       }
 

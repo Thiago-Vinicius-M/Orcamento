@@ -2,9 +2,16 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthSession } from '../auth/useAuthSession'
 
-function urlHasAccessToken(): boolean {
+function urlHasConfirmationParams(): boolean {
   if (typeof window === 'undefined') return false
-  return window.location.hash.includes('access_token=') || window.location.search.includes('access_token=')
+  const { hash, search } = window.location
+  // PKCE flow: Supabase embeds a short-lived `code` in the query string
+  // Implicit flow (legacy): access_token in hash or query string
+  return (
+    search.includes('code=') ||
+    hash.includes('access_token=') ||
+    search.includes('access_token=')
+  )
 }
 
 type Status = 'carregando' | 'autenticado' | 'nao_autenticado' | 'erro'
@@ -13,7 +20,7 @@ export function AuthConfirmCallbackPage() {
   const navigate = useNavigate()
   const { user, loading, error: authError } = useAuthSession()
 
-  const [postConfirmFlow] = useState(urlHasAccessToken)
+  const [postConfirmFlow] = useState(urlHasConfirmationParams)
   const redirecting = Boolean(!loading && user && postConfirmFlow)
 
   const status: Status = loading ? 'carregando' : authError ? 'erro' : user ? 'autenticado' : 'nao_autenticado'
@@ -26,9 +33,16 @@ export function AuthConfirmCallbackPage() {
     }
 
     try {
-      if (window.location.hash.includes('access_token=') || window.location.search.includes('access_token=')) {
-        window.history.replaceState(null, document.title, window.location.pathname + window.location.search)
-      }
+      // Remove `code` (PKCE) e `access_token` (implicit) da URL para não vazar tokens
+      // no histórico do browser nem em ferramentas de analytics.
+      const params = new URLSearchParams(window.location.search)
+      params.delete('code')
+      const cleanSearch = params.toString()
+      window.history.replaceState(
+        null,
+        document.title,
+        window.location.pathname + (cleanSearch ? '?' + cleanSearch : ''),
+      )
     } catch {
       // Se falhar (ex: bloqueio de history), ainda assim redirecionamos.
     }

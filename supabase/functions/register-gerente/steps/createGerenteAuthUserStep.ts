@@ -7,15 +7,12 @@ export interface CreateGerenteAuthUserResult {
 }
 
 /**
- * Cria o usuário no GoTrue com service_role num único passo (app_metadata + user_metadata),
- * evitando admin.updateUserById logo após signUp (janela / mismatch de projeto → "User not found").
- *
- * Confirmação de e-mail: `createUser` não dispara mailer; usamos `auth.resend` no cliente anon
- * quando `emailRedirectTo` vem no body (equivalente ao fluxo anterior com signUp).
+ * Cria o usuário no GoTrue com service_role num único passo (app_metadata + user_metadata).
+ * O envio do e-mail de confirmação (resend) é responsabilidade do cliente browser com PKCE,
+ * pois o code_verifier/code_challenge deve ser gerado e armazenado no navegador.
  */
 export async function createGerenteAuthUser(
   supabaseAdmin: SupabaseClient,
-  supabaseAnon: SupabaseClient,
   body: RegisterGerenteBody,
   allocation: CompanyAllocation,
 ): Promise<
@@ -47,26 +44,7 @@ export async function createGerenteAuthUser(
     }
   }
 
-  const userId = created.user.id
-
-  if (body.emailRedirectTo) {
-    const { error: resendError } = await supabaseAnon.auth.resend({
-      type: 'signup',
-      email: body.email,
-      options: { emailRedirectTo: body.emailRedirectTo },
-    })
-
-    if (resendError) {
-      console.error('register-gerente: resend signup confirmation failed', resendError)
-      const { error: deleteErr } = await supabaseAdmin.auth.admin.deleteUser(userId)
-      if (deleteErr) {
-        console.error('register-gerente: rollback deleteUser after resend failed', deleteErr)
-      }
-      return { ok: false, errorMessage: resendError.message }
-    }
-  }
-
-  return { ok: true, data: { userId } }
+  return { ok: true, data: { userId: created.user.id } }
 }
 
 export async function compensateSignUpUser(

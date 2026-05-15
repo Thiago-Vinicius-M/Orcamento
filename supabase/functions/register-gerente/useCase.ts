@@ -9,11 +9,10 @@ export type RegisterGerenteOutcome =
 
 export async function executeRegisterGerenteUseCase(
   supabaseAdmin: SupabaseClient,
-  supabaseAnon: SupabaseClient,
   body: RegisterGerenteBody,
 ): Promise<RegisterGerenteOutcome> {
   try {
-    const result = await runRegisterGerenteSaga(supabaseAdmin, supabaseAnon, body)
+    const result = await runRegisterGerenteSaga(supabaseAdmin, body)
     if (result.kind === 'success') {
       return {
         status: 'ok',

@@ -1,8 +1,6 @@
 import { corsHeadersPostOptions } from '../_shared/cors.ts'
 import {
   createSupabaseAdminClient,
-  createSupabaseAnonClient,
-  getAnonKey,
   getServiceRoleKey,
   getSupabaseUrl,
 } from '../_shared/clients.ts'
@@ -23,10 +21,8 @@ const jsonHdrs = jsonHeaders(cors)
 
 const supabaseUrl = getSupabaseUrl()
 const serviceRoleKey = getServiceRoleKey()
-const anonKey = getAnonKey()
 
 const supabaseAdmin = createSupabaseAdminClient(supabaseUrl, serviceRoleKey)
-const supabaseAnon = createSupabaseAnonClient(supabaseUrl, anonKey)
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -46,7 +42,7 @@ Deno.serve(async (req) => {
       return flatErrorJsonResponse(jsonHdrs, 400, 'Campos obrigatórios ausentes')
     }
 
-    const outcome = await executeRegisterGerenteUseCase(supabaseAdmin, supabaseAnon, body)
+    const outcome = await executeRegisterGerenteUseCase(supabaseAdmin, body)
 
     if (outcome.status === 'bad_request') {
       return flatErrorJsonResponse(jsonHdrs, 400, outcome.message)

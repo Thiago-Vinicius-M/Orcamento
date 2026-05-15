@@ -11,7 +11,8 @@
       "Bash(npm run *)",
       "Bash(Get-ChildItem -Path \"e:\\\\Projetos\\\\NewOrca\\\\src\\\\auth\\\\\" -Filter \"*.ts\" -o \"*.tsx\" | Select-Object -ExpandProperty Name)",
       "Bash(Get-ChildItem -Path \"e:\\\\Projetos\\\\NewOrca\" -Recurse -Directory -Filter \"auth\")",
-      "Bash(Select-Object -ExpandProperty FullName)"
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(Get-ChildItem -Path \"e:\\\\Projetos\\\\NewOrca\\\\src\\\\auth\" -Type File)"
     ]
   }
 }
