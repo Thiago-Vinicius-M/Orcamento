@@ -1,4 +1,9 @@
 export { DataTable, type Column } from './DataTable'
+export {
+  ResponsiveTable,
+  type MobileCardConfig,
+  type MobileCardField,
+} from './ResponsiveTable'
 export { ErrorBoundary } from './ErrorBoundary'
 export { StatusPill } from './StatusPill'
 export { PageHeader } from './PageHeader'

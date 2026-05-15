@@ -1,5 +1,5 @@
 import type { OrcamentoDetalhe, OrcamentoItemDetalhe } from '../../application/orcamento/orcamentoDetalheTypes'
-import { EmptyState, DataTable, type Column } from '../../components'
+import { EmptyState, type Column, ResponsiveTable, type MobileCardConfig } from '../../components'
 
 type Props = {
   itens: OrcamentoItemDetalhe[]
@@ -20,6 +20,22 @@ const itensColumns: Column<OrcamentoItemDetalhe>[] = [
   { header: 'Subtotal (R$)', accessor: (item) => `R$ ${item.subtotal.toFixed(2)}` },
 ]
 
+const itensMobileCard: MobileCardConfig<OrcamentoItemDetalhe> = {
+  title: (item) =>
+    item.produto_codigo && item.produto_codigo !== '—'
+      ? `${item.produto_codigo} — ${item.produto_nome}`
+      : item.produto_nome,
+  fields: [
+    { label: 'Quantidade', value: (item) => String(item.quantidade) },
+    { label: 'Preço unit.', value: (item) => `R$ ${item.preco_unitario.toFixed(2)}` },
+    {
+      label: 'Subtotal',
+      value: (item) => `R$ ${item.subtotal.toFixed(2)}`,
+      fullWidth: true,
+    },
+  ],
+}
+
 export function OrcamentoDetalheItensList({ itens, orcamento }: Props) {
   return (
     <section className="card">
@@ -29,7 +45,12 @@ export function OrcamentoDetalheItensList({ itens, orcamento }: Props) {
       {itens.length === 0 ? (
         <EmptyState message="Nenhum item cadastrado." />
       ) : (
-        <DataTable columns={itensColumns} data={itens} rowKey={(item) => item.id} />
+        <ResponsiveTable
+          columns={itensColumns}
+          data={itens}
+          rowKey={(item) => item.id}
+          mobileCard={itensMobileCard}
+        />
       )}
 
       <footer className="card-footer card-footer-right">

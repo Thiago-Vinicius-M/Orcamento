@@ -7,7 +7,7 @@ import { formatCurrencyBRL } from '../domain/financeiro/moeda'
 import { supabaseConfigured, SUPABASE_NOT_CONFIGURED_MESSAGE } from '../lib/supabaseClient'
 import { useCrudFormState } from '../hooks/useCrudFormState'
 import { useCrudResource } from '../hooks/useCrudResource'
-import { PageHeader, StatusPill, LoadingState, EmptyState, DataTable, FormField, type Column } from '../components'
+import { PageHeader, StatusPill, LoadingState, EmptyState, FormField, type Column, ResponsiveTable, type MobileCardConfig } from '../components'
 import type { Produto, ProdutoPayload } from '../repositories/produtoRepository'
 import { produtoRepo } from '../repositories/produtoRepository'
 
@@ -130,6 +130,43 @@ export function ProdutosPage() {
       const msg = e instanceof Error ? e.message : 'Falha ao salvar produto.'
       toast.error(msg)
     }
+  }
+
+  const produtoMobileCard: MobileCardConfig<Produto> = {
+    title: (p) => p.nome,
+    meta: (p) => p.descricao ?? undefined,
+    badge: (p) => (
+      <StatusPill variant={p.ativo ? 'success' : undefined}>
+        {p.ativo ? 'Ativo' : 'Inativo'}
+      </StatusPill>
+    ),
+    fields: [
+      { label: 'Código', value: (p) => p.codigo },
+      { label: 'Preço', value: (p) => formatCurrencyBRL(p.preco_unitario) },
+    ],
+    actions: readOnly
+      ? undefined
+      : (p) => (
+          <>
+            <button
+              type="button"
+              className="btn-link"
+              onClick={() => handleEdit(p)}
+              aria-label={`Editar produto ${p.nome}`}
+            >
+              Editar
+            </button>
+            <button
+              type="button"
+              className="btn-link-danger"
+              onClick={() => void handleDelete(p)}
+              disabled={saving}
+              aria-label={`Excluir produto ${p.nome}`}
+            >
+              Excluir
+            </button>
+          </>
+        ),
   }
 
   const produtoColumns: Column<Produto>[] = [
@@ -325,7 +362,7 @@ export function ProdutosPage() {
               {produtosFiltrados.length === 0 ? (
                 <EmptyState message="Nenhum produto encontrado para esta busca. Ajuste o termo ou limpe o filtro." />
               ) : (
-                <DataTable columns={produtoColumns} data={produtosFiltrados} rowKey={(p) => p.id} />
+                <ResponsiveTable columns={produtoColumns} data={produtosFiltrados} rowKey={(p) => p.id} mobileCard={produtoMobileCard} />
               )}
             </>
           )}

@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xargs grep -l \"tailwind\")",
+      "Bash(findstr /i tailwind)",
+      "Bash(Get-ChildItem -Path \"e:\\\\Projetos\\\\NewOrca\\\\src\\\\components\\\\ui\\\\\" -File | Select-Object Name)",
+      "Bash(grep -E \"^\\\\\\\\.\" e:/Projetos/NewOrca/src/styles/global.css)",
+      "Bash(grep -c \"^\\\\\\\\.\" e:/Projetos/NewOrca/src/styles/global.css)",
+      "Bash(Get-ChildItem -Path \"e:\\\\Projetos\\\\NewOrca\\\\src\" -Directory)",
+      "Bash(Select-Object Name)",
+      "Bash(npm run *)"
+    ]
+  }
+}

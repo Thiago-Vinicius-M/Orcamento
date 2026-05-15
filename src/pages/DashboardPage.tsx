@@ -4,7 +4,7 @@ import { useSupabase } from '../lib/useSupabase'
 import { formatCurrencyBRL } from '../domain/financeiro/moeda'
 import { formatarStatusOrcamento, getStatusPillClassName } from '../domain/orcamento/status'
 import type { OrcamentoListRow } from '../domain/orcamento/mappers'
-import { PageHeader, StatusPill, LoadingState, EmptyState, DataTable, type Column } from '../components'
+import { PageHeader, StatusPill, LoadingState, EmptyState, type Column, ResponsiveTable, type MobileCardConfig } from '../components'
 import { loadDashboardMetrics, type DashboardMetrics } from '../application/dashboard/dashboardMetricsService'
 import { fetchDashboardOrcamentosList } from '../application/dashboard/dashboardListsService'
 import { useAsyncEffect } from '../hooks/useAsyncEffect'
@@ -174,6 +174,26 @@ export function DashboardPage() {
     },
   ]
 
+  const orcamentoMobileCard: MobileCardConfig<OrcamentoListRow> = {
+    title: (o) => `Nº ${o.id.slice(0, 8).toUpperCase()}`,
+    badge: (o) => (
+      <StatusPill variant={getStatusPillClassName(o.status)}>
+        {formatarStatusOrcamento(o.status)}
+      </StatusPill>
+    ),
+    fields: [
+      { label: 'Cliente', value: (o) => o.cliente_nome, fullWidth: true },
+      { label: 'Gerado por', value: (o) => o.gerado_por_nome, fullWidth: true },
+      { label: 'Criado em', value: (o) => new Date(o.created_at).toLocaleDateString('pt-BR') },
+      { label: 'Total', value: (o) => `R$ ${o.total.toFixed(2)}` },
+    ],
+    actions: (o) => (
+      <Link className="btn-link" to={`/orcamentos/${o.id}`}>
+        Ver detalhes →
+      </Link>
+    ),
+  }
+
   return (
     <>
       <header className="dashboard-page__header">
@@ -254,7 +274,7 @@ export function DashboardPage() {
           ) : orcamentosPendentes.length === 0 ? (
             <EmptyState message="Nenhum orçamento pendente encontrado." />
           ) : (
-            <DataTable columns={pendentesColumns} data={orcamentosPendentes} rowKey={(o) => o.id} />
+            <ResponsiveTable columns={pendentesColumns} data={orcamentosPendentes} rowKey={(o) => o.id} mobileCard={orcamentoMobileCard} />
           )}
         </section>
 
@@ -269,7 +289,7 @@ export function DashboardPage() {
           ) : orcamentosVigentes.length === 0 ? (
             <EmptyState message="Nenhum orçamento vigente encontrado." />
           ) : (
-            <DataTable columns={vigentesColumns} data={orcamentosVigentes} rowKey={(o) => o.id} />
+            <ResponsiveTable columns={vigentesColumns} data={orcamentosVigentes} rowKey={(o) => o.id} mobileCard={orcamentoMobileCard} />
           )}
         </section>
       </div>

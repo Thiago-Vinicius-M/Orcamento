@@ -49,6 +49,24 @@ export function OrcamentoNovoItensEditor({
     [produtos],
   )
 
+  const itemsComputed = useMemo(
+    () =>
+      itens.map((item) => {
+        const qtd = parseDecimalInput(item.quantidade)
+        const preco = parseDecimalInput(item.preco_unitario)
+        const subtotal = calcularSubtotalItem(qtd, preco)
+        const precoStr = item.preco_unitario.trim()
+        const precoExibicao =
+          precoStr === ''
+            ? item.produto_id === ''
+              ? 'Selecione o produto'
+              : '—'
+            : formatCurrencyBRL(preco)
+        return { item, subtotal, precoStr, precoExibicao }
+      }),
+    [itens],
+  )
+
   return (
     <section className="card">
       <header className="card-header card-header-row">
@@ -58,32 +76,23 @@ export function OrcamentoNovoItensEditor({
         </button>
       </header>
 
-      <div className="table-wrapper">
-        <table className="table">
-          <thead>
-            <tr>
-              <th scope="col">Produto</th>
-              <th scope="col">Qtd.</th>
-              <th scope="col">Preço unit.</th>
-              <th scope="col">Subtotal (R$)</th>
-              <th scope="col" style={{ width: '1%' }}>
-                Ações
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {itens.map((item, index) => {
-              const qtd = parseDecimalInput(item.quantidade)
-              const preco = parseDecimalInput(item.preco_unitario)
-              const subtotal = calcularSubtotalItem(qtd, preco)
-              const precoStr = item.preco_unitario.trim()
-              const precoExibicao =
-                precoStr === ''
-                  ? item.produto_id === ''
-                    ? 'Selecione o produto'
-                    : '—'
-                  : formatCurrencyBRL(preco)
-              return (
+      {/* Desktop: tabela tradicional */}
+      <div className="items-editor__desktop">
+        <div className="table-wrapper table-wrapper--scroll-hidden">
+          <table className="table">
+            <thead>
+              <tr>
+                <th scope="col">Produto</th>
+                <th scope="col">Qtd.</th>
+                <th scope="col">Preço unit.</th>
+                <th scope="col">Subtotal (R$)</th>
+                <th scope="col" style={{ width: '1%' }}>
+                  Ações
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {itemsComputed.map(({ item, subtotal, precoStr, precoExibicao }, index) => (
                 <tr key={index}>
                   <td className="table-cell-wrap">
                     <SearchableSelect
@@ -129,10 +138,71 @@ export function OrcamentoNovoItensEditor({
                     </button>
                   </td>
                 </tr>
-              )
-            })}
-          </tbody>
-        </table>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Mobile: cards verticais */}
+      <div className="items-editor__mobile">
+        {itemsComputed.map(({ item, subtotal, precoStr, precoExibicao }, index) => (
+          <div key={index} className="card items-editor-mobile-card">
+            <div className="form-row">
+              <label htmlFor={`orc_item_produto_m_${index}`}>Produto</label>
+              <SearchableSelect
+                id={`orc_item_produto_m_${index}`}
+                ariaLabel={`Produto, item ${index + 1}`}
+                options={produtoOptions}
+                value={item.produto_id}
+                onValueChange={(id) => handleProdutoChange(index, id)}
+                disabled={loadingRefs}
+                required
+                emptySelectionLabel="Selecione"
+              />
+            </div>
+            <div className="items-editor-mobile-grid">
+              <div className="form-row">
+                <label>Qtd.</label>
+                <input
+                  className="input-control"
+                  type="number"
+                  min="0"
+                  step={1}
+                  inputMode="numeric"
+                  value={item.quantidade}
+                  onChange={(e) => atualizarItem(index, { quantidade: e.target.value })}
+                  onBlur={(e) =>
+                    atualizarItem(index, {
+                      quantidade: normalizarQuantidadeInteira(e.currentTarget.value),
+                    })
+                  }
+                  required
+                />
+              </div>
+              <div className="form-row">
+                <label>Preço unit.</label>
+                <span className={precoStr === '' ? 'text-muted' : undefined}>{precoExibicao}</span>
+              </div>
+            </div>
+            <div className="items-editor-mobile-footer">
+              <span>
+                <span className="mobile-card__label">Subtotal</span>
+                <strong className="mobile-card__value mobile-card__value--emphasis">
+                  R$ {subtotal.toFixed(2)}
+                </strong>
+              </span>
+              <button
+                type="button"
+                className="btn-link-danger"
+                onClick={() => removerItem(index)}
+                disabled={itens.length <= 1}
+              >
+                Remover
+              </button>
+            </div>
+          </div>
+        ))}
       </div>
 
       <div className="form-grid" style={{ padding: '1rem' }}>

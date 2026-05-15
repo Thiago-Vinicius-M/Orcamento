@@ -12,7 +12,7 @@ import {
 import { loadProfilesDaEmpresaParaFiltroWithClient } from '../repositories/orcamento/profileRepo'
 import { useSupabase } from '../lib/useSupabase'
 import { useUserRole } from '../hooks/useUserRole'
-import { PageHeader, StatusPill, LoadingState, EmptyState, DataTable, type Column } from '../components'
+import { PageHeader, StatusPill, LoadingState, EmptyState, type Column, ResponsiveTable, type MobileCardConfig } from '../components'
 
 const FILTROS_VAZIOS: OrcamentosListFiltros = {
   dataInicio: '',
@@ -129,6 +129,27 @@ export function OrcamentosPage() {
     filtrosAplicados.clienteId !== '' ||
     filtrosAplicados.produtoId !== '' ||
     filtrosAplicados.usuarioId !== ''
+
+  const orcamentoMobileCard: MobileCardConfig<OrcamentoListRow> = {
+    title: (o) => `Nº ${o.id.slice(0, 8).toUpperCase()}`,
+    badge: (o) => (
+      <StatusPill variant={getStatusPillClassName(o.status)}>
+        {formatarStatusOrcamento(o.status)}
+      </StatusPill>
+    ),
+    fields: [
+      { label: 'Cliente', value: (o) => o.cliente_nome, fullWidth: true },
+      { label: 'Gerado por', value: (o) => o.gerado_por_nome, fullWidth: true },
+      { label: 'Criado em', value: (o) => o.created_at ? new Date(o.created_at).toLocaleDateString('pt-BR') : '—' },
+      { label: 'Validade até', value: (o) => o.validade_ate ? new Date(o.validade_ate).toLocaleDateString('pt-BR') : '—' },
+      { label: 'Total', value: (o) => `R$ ${o.total.toFixed(2)}`, fullWidth: true },
+    ],
+    actions: (o) => (
+      <Link className="btn-link" to={`/orcamentos/${o.id}`}>
+        Ver detalhes →
+      </Link>
+    ),
+  }
 
   const orcamentoColumns: Column<OrcamentoListRow>[] = [
     { header: 'Nº', accessor: (o) => o.id.slice(0, 8).toUpperCase() },
@@ -276,7 +297,7 @@ export function OrcamentosPage() {
             }
           />
         ) : (
-          <DataTable columns={orcamentoColumns} data={orcamentos} rowKey={(o) => o.id} />
+          <ResponsiveTable columns={orcamentoColumns} data={orcamentos} rowKey={(o) => o.id} mobileCard={orcamentoMobileCard} />
         )}
       </section>
     </>

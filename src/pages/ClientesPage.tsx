@@ -5,7 +5,7 @@ import { matchesSearch } from '../lib/searchNormalize'
 import { supabaseConfigured, SUPABASE_NOT_CONFIGURED_MESSAGE } from '../lib/supabaseClient'
 import { useCrudFormState } from '../hooks/useCrudFormState'
 import { useCrudResource } from '../hooks/useCrudResource'
-import { PageHeader, LoadingState, EmptyState, DataTable, FormField, type Column } from '../components'
+import { PageHeader, LoadingState, EmptyState, FormField, type Column, ResponsiveTable, type MobileCardConfig } from '../components'
 import type { Cliente, ClientePayload } from '../repositories/clienteRepository'
 import { clienteRepo } from '../repositories/clienteRepository'
 
@@ -117,6 +117,31 @@ export function ClientesPage() {
     } catch {
       toast.error('Falha ao salvar cliente.')
     }
+  }
+
+  const clienteMobileCard: MobileCardConfig<Cliente> = {
+    title: (c) => c.nome,
+    fields: [
+      { label: 'Documento', value: (c) => c.documento ?? '—', fullWidth: true },
+      { label: 'Email', value: (c) => c.email ?? '—', fullWidth: true },
+      { label: 'Telefone', value: (c) => c.telefone ? `Tel: ${c.telefone}` : '—', fullWidth: true },
+    ],
+    actions: (c) => (
+      <>
+        <button type="button" className="btn-link" onClick={() => handleEdit(c)} aria-label={`Editar cliente ${c.nome}`}>
+          Editar
+        </button>
+        <button
+          type="button"
+          className="btn-link-danger"
+          onClick={() => void handleDelete(c)}
+          disabled={saving}
+          aria-label={`Excluir cliente ${c.nome}`}
+        >
+          Excluir
+        </button>
+      </>
+    ),
   }
 
   const clienteColumns: Column<Cliente>[] = [
@@ -279,7 +304,7 @@ export function ClientesPage() {
               {clientesFiltrados.length === 0 ? (
                 <EmptyState message="Nenhum cliente encontrado para esta busca. Ajuste o termo ou limpe o filtro." />
               ) : (
-                <DataTable columns={clienteColumns} data={clientesFiltrados} rowKey={(c) => c.id} />
+                <ResponsiveTable columns={clienteColumns} data={clientesFiltrados} rowKey={(c) => c.id} mobileCard={clienteMobileCard} />
               )}
             </>
           )}

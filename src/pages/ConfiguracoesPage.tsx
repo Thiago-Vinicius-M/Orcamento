@@ -113,8 +113,8 @@ export function ConfiguracoesPage() {
                 >
                   <div
                     style={{
-                      width: 120,
-                      height: 120,
+                      width: 'clamp(80px, 25vw, 120px)',
+                      height: 'clamp(80px, 25vw, 120px)',
                       borderRadius: 8,
                       border: '1px solid var(--border-subtle, #e5e5e5)',
                       background: 'var(--surface-muted, #f5f5f5)',
