@@ -561,6 +561,12 @@ h2 {
   color: var(--accent-red);
 }
 
+.btn-action--ghost {
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+}
+
 /* Placeholder de página */
 .page-placeholder {
   margin-top: 1rem;
@@ -1473,6 +1479,134 @@ h2 {
   margin: 0.5rem 0;
 }
 
+/* ============================================================
+   CONFIRM MODAL
+   ============================================================ */
+
+@keyframes overlayIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes confirmIn {
+  from { opacity: 0; transform: scale(0.95) translateY(-8px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0);     }
+}
+
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(4px);
+  animation: overlayIn 0.15s ease;
+}
+
+.confirm-modal {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.18);
+  padding: 2rem 1.75rem 1.5rem;
+  width: 100%;
+  max-width: 440px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.75rem;
+  animation: confirmIn 0.2s ease;
+}
+
+.confirm-modal__icon {
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.25rem;
+}
+
+.confirm-modal__icon--danger  { background: var(--accent-red-soft);    color: var(--accent-red); }
+.confirm-modal__icon--warning { background: var(--accent-orange-soft);  color: var(--accent-orange); }
+.confirm-modal__icon--info    { background: var(--accent-blue-soft);    color: var(--accent-blue); }
+
+.confirm-modal__title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-heading);
+  margin: 0;
+}
+
+.confirm-modal__message {
+  font-size: 0.9375rem;
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1.55;
+}
+
+.confirm-modal__actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+  width: 100%;
+  justify-content: flex-end;
+}
+
+.confirm-modal__btn {
+  padding: 0.5rem 1.25rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: background 0.15s, opacity 0.15s;
+  font-family: inherit;
+}
+
+.confirm-modal__btn--cancel {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+}
+
+.confirm-modal__btn--cancel:hover { background: var(--bg-page); }
+
+.confirm-modal__btn--confirm-danger {
+  background: var(--accent-red);
+  color: #fff;
+}
+
+.confirm-modal__btn--confirm-danger:hover { opacity: 0.88; }
+
+.confirm-modal__btn--confirm-warning {
+  background: var(--accent-orange);
+  color: #fff;
+}
+
+.confirm-modal__btn--confirm-warning:hover { opacity: 0.88; }
+
+.confirm-modal__btn--confirm-info {
+  background: var(--accent-blue);
+  color: #fff;
+}
+
+.confirm-modal__btn--confirm-info:hover { opacity: 0.88; }
+
+@media (max-width: 480px) {
+  .confirm-modal { padding: 1.5rem 1.25rem 1.25rem; }
+  .confirm-modal__actions { flex-direction: column-reverse; }
+  .confirm-modal__btn { width: 100%; justify-content: center; }
+}
+
+/* ============================================================
+   END CONFIRM MODAL
+   ============================================================ */
+
 .items-editor-mobile-footer {
   display: flex;
   align-items: center;
@@ -1481,3 +1615,533 @@ h2 {
   border-top: 1px solid var(--border);
   margin-top: 0.25rem;
 }
+
+/* ============================================================
+   PRODUTO ITEM BOTTOM SHEET / MODAL
+   ============================================================ */
+
+@keyframes sheetSlideIn {
+  from { transform: translateY(100%); opacity: 0.6; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+@keyframes sheetFadeIn {
+  from { opacity: 0; transform: scale(0.97) translateY(-6px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0); }
+}
+
+.produto-item-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 200;
+  display: flex;
+  align-items: flex-end;
+}
+
+.produto-item-sheet {
+  background: #fff;
+  width: 100%;
+  border-radius: 16px 16px 0 0;
+  padding: 1.25rem 1rem 2rem;
+  animation: sheetSlideIn 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+  max-height: 92dvh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.produto-item-sheet__handle {
+  width: 36px;
+  height: 4px;
+  background: #d1d5db;
+  border-radius: 2px;
+  margin: 0 auto 1.25rem;
+}
+
+.produto-item-sheet__title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: 1.25rem;
+  color: var(--text, #1a1a1a);
+}
+
+.produto-item-sheet__fields {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.produto-item-sheet__preview {
+  background: var(--bg, #f4f6f9);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
+
+.produto-item-sheet__preview-label {
+  color: var(--text-muted, #6b7280);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 0.2rem;
+}
+
+.produto-item-sheet__preview-value {
+  font-weight: 700;
+  font-size: 1.2rem;
+  color: var(--text, #1a1a1a);
+}
+
+.produto-item-sheet__actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.produto-item-sheet__actions > button {
+  flex: 1;
+  padding: 0.875rem;
+  font-size: 1rem;
+  justify-content: center;
+}
+
+/* Quantity stepper — +/- buttons around the input */
+.qty-stepper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.qty-stepper__btn {
+  flex-shrink: 0;
+  width: 3rem;
+  height: 3rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-page, #f4f6f9);
+  border: 1.5px solid var(--border, #e2e8f0);
+  border-radius: var(--radius-sm, 8px);
+  font-size: 1.5rem;
+  font-weight: 500;
+  line-height: 1;
+  color: var(--text, #334155);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+
+.qty-stepper__btn:hover {
+  background: var(--accent-blue-soft, #dbeafe);
+  border-color: var(--accent-blue, #2563eb);
+  color: var(--accent-blue, #2563eb);
+}
+
+.qty-stepper__btn:active {
+  background: var(--accent-blue, #2563eb);
+  border-color: var(--accent-blue, #2563eb);
+  color: #fff;
+}
+
+.qty-stepper__input {
+  flex: 1;
+  text-align: center;
+  min-width: 0;
+}
+
+.qty-stepper__input::-webkit-inner-spin-button,
+.qty-stepper__input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.qty-stepper__input[type=number] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+/* Desktop: modal centrado */
+@media (min-width: 769px) {
+  .produto-item-overlay {
+    align-items: center;
+    justify-content: center;
+  }
+
+  .produto-item-sheet {
+    width: 480px;
+    max-width: 96vw;
+    border-radius: 12px;
+    padding: 1.75rem;
+    animation: sheetFadeIn 0.2s ease-out;
+    max-height: 90vh;
+  }
+
+  .produto-item-sheet__handle {
+    display: none;
+  }
+}
+
+/* ============================================================
+   ITEM CARD (lista de itens no editor)
+   ============================================================ */
+
+.item-card {
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 8px;
+  padding: 0.875rem 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  background: #fff;
+  transition: border-color 0.15s;
+}
+
+.item-card:hover {
+  border-color: var(--accent-blue, #1d4ed8);
+}
+
+.item-card__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.item-card__nome {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 0.9rem;
+}
+
+.item-card__meta {
+  font-size: 0.78rem;
+  color: var(--text-muted, #6b7280);
+  margin-top: 0.2rem;
+}
+
+.item-card__subtotal {
+  font-weight: 700;
+  white-space: nowrap;
+  font-size: 0.95rem;
+}
+
+.item-card__actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+@media (max-width: 480px) {
+  .item-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .item-card__actions {
+    width: 100%;
+    justify-content: flex-end;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--border, #e5e7eb);
+  }
+}
+
+/* ============================================================
+   END PRODUTO ITEM SHEET / ITEM CARD
+   ============================================================ */
+
+/* ============================================================
+   PARCELAMENTO — info banner + preview de parcelas
+   ============================================================ */
+
+.payment-info-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 0.9rem;
+  background: var(--accent-blue-soft);
+  border: 1px solid rgba(37, 99, 235, 0.22);
+  border-radius: var(--radius-sm);
+  color: #1d4ed8;
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+.payment-info-banner__indicator {
+  display: block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #1d4ed8;
+  flex-shrink: 0;
+}
+
+.parcelas-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
+  padding: 0.7rem 0.9rem;
+  background: var(--bg-page);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+}
+
+.parcelas-preview__header {
+  font-weight: 600;
+  color: var(--text);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.25rem;
+}
+
+.parcelas-preview__item {
+  display: flex;
+  justify-content: space-between;
+  color: var(--text-muted);
+}
+
+.parcelas-preview__item--destaque {
+  border-top: 1px solid var(--border);
+  padding-top: 0.3rem;
+  margin-top: 0.1rem;
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* ============================================================
+   END PARCELAMENTO
+   ============================================================ */
+
+/* ============================================================
+   PAGAMENTO DETALHE — Cartão rico de detalhamento de pagamento
+   ============================================================ */
+
+.pag-card {
+  padding: 0;
+  overflow: hidden;
+  border-top: 3px solid var(--accent-blue);
+}
+
+.pag-secao-header {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.875rem 1.25rem;
+  background: var(--bg-page);
+}
+
+.pag-secao-header::before {
+  content: '';
+  display: block;
+  width: 3px;
+  height: 1.125rem;
+  background: var(--accent-blue);
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.pag-secao-titulo {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-heading);
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.pag-badges-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 0.625rem;
+  padding: 1rem 1.25rem;
+}
+
+.pag-info-badge {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.6rem 0.875rem;
+  background: var(--bg-page);
+  border: 1px solid var(--border);
+  border-top: 2px solid var(--accent-blue);
+  border-radius: var(--radius-sm);
+}
+
+.pag-info-badge__label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+}
+
+.pag-info-badge__value {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--text-heading);
+  margin-top: 0.1rem;
+}
+
+.pag-two-col {
+  display: grid;
+  grid-template-columns: 1fr 220px;
+  gap: 1.25rem;
+  padding: 0 1.25rem 1.25rem;
+  align-items: start;
+}
+
+.pag-two-col--equal {
+  grid-template-columns: 1fr 1fr;
+}
+
+.pag-label-small {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.3rem;
+}
+
+.pag-valor-destaque {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--accent-blue);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.pag-resumo-box {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.pag-resumo-box__titulo {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  padding: 0.6rem 0.875rem;
+  background: var(--bg-page);
+  border-bottom: 1px solid var(--border);
+}
+
+.pag-resumo-box__linha {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.875rem;
+  font-size: 0.8125rem;
+  border-bottom: 1px solid var(--border);
+  gap: 0.5rem;
+}
+
+.pag-resumo-box__linha-label {
+  color: var(--text-muted);
+}
+
+.pag-resumo-box__linha-value {
+  font-weight: 600;
+  color: var(--text-heading);
+  white-space: nowrap;
+}
+
+.pag-resumo-box__destaque {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.65rem 0.875rem;
+  background: var(--accent-green-soft);
+  gap: 0.5rem;
+}
+
+.pag-resumo-box__destaque-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--accent-green);
+}
+
+.pag-resumo-box__destaque-value {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--accent-green);
+  white-space: nowrap;
+}
+
+.pag-footer {
+  padding: 0 1.25rem 1.25rem;
+}
+
+.pag-aviso-boleto {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  font-style: italic;
+  padding: 0.75rem 0;
+}
+
+.pag-simples-section {
+  background: transparent;
+}
+
+.pag-simples-body {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.875rem 1.25rem;
+}
+
+.pag-simples-body__desc {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.pag-simples-body__valor {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--text-heading);
+}
+
+@media (max-width: 900px) {
+  .pag-two-col {
+    grid-template-columns: 1fr;
+  }
+  .pag-two-col--equal {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .pag-badges-row {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    padding: 0.875rem 1rem;
+  }
+  .pag-two-col {
+    padding: 0 1rem 1rem;
+  }
+  .pag-secao-header {
+    padding: 0.75rem 1rem;
+  }
+  .pag-footer {
+    padding: 0 1rem 1rem;
+  }
+  .pag-valor-destaque {
+    font-size: 1.25rem;
+  }
+}
+
+/* ============================================================
+   END PAGAMENTO DETALHE
+   ============================================================ */

@@ -6,6 +6,7 @@ import {
   descontoVendedorExcedeTeto,
   mensagemValorMaximoDescontoVendedor,
 } from '../../domain/orcamento/descontoVendedor'
+import type { PagamentoForm } from '../../domain/orcamento/pagamento'
 import { getDefaultSupabase } from '../../lib/supabaseClient'
 import { getCompanySettingsRow } from '../../repositories/companySettingsRepository'
 import { getOrcamentoContextWithClient } from '../../repositories/orcamento/orcamentoContextProvider'
@@ -16,25 +17,13 @@ import {
   insertOrcamentoPagamento,
 } from '../../repositories/orcamento/orcamentoWriteRepo'
 
-export type PagamentoTipo = 'dinheiro' | 'debito' | 'credito' | 'pix' | 'boleto' | 'financiamento'
+export type { PagamentoTipo, PagamentoForm } from '../../domain/orcamento/pagamento'
 
 export type ItemForm = {
   produto_id: string
   quantidade: string
   preco_unitario: string
-}
-
-export type PagamentoForm = {
-  tipo: PagamentoTipo
-  valor_entrada: string
-  num_parcelas: string
-  taxa_servico_percentual: string
-  aplicar_taxa: boolean
-}
-
-export type DescontoForm = {
-  tipo: 'percentual' | 'fixo' | ''
-  valor: string
+  desconto_percentual: string
 }
 
 type CriarOrcamentoInput = {
@@ -42,7 +31,6 @@ type CriarOrcamentoInput = {
   itens: ItemForm[]
   pagamento: PagamentoForm
   totais: OrcamentoTotais
-  desconto: DescontoForm
 }
 
 function normalizarItensValidos(itens: ItemForm[]): ItemForm[] {
@@ -79,9 +67,6 @@ export async function criarOrcamento(input: CriarOrcamentoInput): Promise<string
 
   const numero_pdf = await nextOrcamentoNumeroPdf()
 
-  const descontoTipo = input.desconto.tipo || null
-  const descontoValor = parseDecimalInput(input.desconto.valor)
-
   const orcamentoId = await insertOrcamento({
     cliente_id: input.clienteId,
     company_id,
@@ -90,20 +75,22 @@ export async function criarOrcamento(input: CriarOrcamentoInput): Promise<string
     subtotal: input.totais.subtotal,
     desconto_total: input.totais.desconto_total,
     total: input.totais.total,
-    desconto_tipo: descontoTipo,
-    desconto_valor: descontoValor,
+    desconto_tipo: null,
+    desconto_valor: 0,
   })
 
   const itensPayload = itensValidos.map((item) => {
     const quantidade = parseDecimalInput(item.quantidade)
     const precoUnitario = parseDecimalInput(item.preco_unitario)
+    const descontoPercentual = parseDecimalInput(item.desconto_percentual)
 
     return {
       orcamento_id: orcamentoId,
       produto_id: item.produto_id,
       quantidade,
       preco_unitario: precoUnitario,
-      subtotal: calcularSubtotalItem(quantidade, precoUnitario),
+      desconto_percentual: descontoPercentual,
+      subtotal: calcularSubtotalItem(quantidade, precoUnitario, descontoPercentual),
     }
   })
 
@@ -111,11 +98,13 @@ export async function criarOrcamento(input: CriarOrcamentoInput): Promise<string
 
   const pagamentoPayload: {
     orcamento_id: string
-    tipo: PagamentoTipo
+    tipo: string
     valor_entrada?: number | null
     num_parcelas?: number | null
     taxa_servico_percentual?: number | null
     aplicar_taxa?: boolean
+    primeiro_vencimento?: string | null
+    intervalo_dias?: number | null
   } = {
     orcamento_id: orcamentoId,
     tipo: input.pagamento.tipo,
@@ -127,6 +116,19 @@ export async function criarOrcamento(input: CriarOrcamentoInput): Promise<string
       input.pagamento.num_parcelas.trim() === '' ? null : Number(input.pagamento.num_parcelas) || null
     pagamentoPayload.taxa_servico_percentual = parseNullableDecimalInput(input.pagamento.taxa_servico_percentual)
     pagamentoPayload.aplicar_taxa = input.pagamento.aplicar_taxa
+  }
+
+  if (input.pagamento.tipo === 'credito') {
+    pagamentoPayload.num_parcelas =
+      input.pagamento.num_parcelas.trim() === '' ? null : Number(input.pagamento.num_parcelas) || null
+  }
+
+  if (input.pagamento.tipo === 'boleto') {
+    pagamentoPayload.num_parcelas =
+      input.pagamento.num_parcelas.trim() === '' ? null : Number(input.pagamento.num_parcelas) || null
+    pagamentoPayload.primeiro_vencimento = input.pagamento.primeiro_vencimento.trim() || null
+    pagamentoPayload.intervalo_dias =
+      input.pagamento.intervalo_dias.trim() === '' ? null : Number(input.pagamento.intervalo_dias) || null
   }
 
   await insertOrcamentoPagamento(pagamentoPayload)

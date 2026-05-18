@@ -1,6 +1,6 @@
 import type { ReactNode, ButtonHTMLAttributes } from 'react'
 
-type ActionButtonVariant = 'primary' | 'success' | 'danger' | 'warning' | 'outline-danger'
+type ActionButtonVariant = 'primary' | 'success' | 'danger' | 'warning' | 'outline-danger' | 'ghost'
 
 const VARIANT_CLASS: Record<ActionButtonVariant, string> = {
   primary: 'btn-action--primary',
@@ -8,6 +8,7 @@ const VARIANT_CLASS: Record<ActionButtonVariant, string> = {
   danger: 'btn-action--danger',
   warning: 'btn-action--warning',
   'outline-danger': 'btn-action--outline-danger',
+  ghost: 'btn-action--ghost',
 }
 
 type ActionButtonProps = {

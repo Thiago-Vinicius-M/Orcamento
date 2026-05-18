@@ -20,6 +20,7 @@ export type OrcamentoItemDetalhe = {
   produto_nome: string
   quantidade: number
   preco_unitario: number
+  desconto_percentual: number
   subtotal: number
 }
 
@@ -29,6 +30,8 @@ export type OrcamentoPagamentoDetalhe = {
   num_parcelas: number | null
   taxa_servico_percentual: number | null
   aplicar_taxa: boolean
+  primeiro_vencimento: string | null
+  intervalo_dias: number | null
 }
 
 export type OrcamentoDetalheResult = {

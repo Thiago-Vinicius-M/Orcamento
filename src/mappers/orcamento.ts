@@ -7,6 +7,8 @@ type PagamentoDetalheMapped = {
   num_parcelas: number | null
   taxa_servico_percentual: number | null
   aplicar_taxa: boolean
+  primeiro_vencimento: string | null
+  intervalo_dias: number | null
 }
 
 /** Linha de pagamento vindas do Supabase (campos opcionais; permite chaves extras). */
@@ -17,6 +19,8 @@ export const PagamentoRowSchema = z
     num_parcelas: z.unknown().optional(),
     taxa_servico_percentual: z.unknown().optional(),
     aplicar_taxa: z.unknown().optional(),
+    primeiro_vencimento: z.unknown().optional(),
+    intervalo_dias: z.unknown().optional(),
   })
   .passthrough()
 
@@ -27,9 +31,11 @@ export type MappedPdfPagamentoRow = {
   num_parcelas: number | null
   taxa_servico_percentual: number | null
   aplicar_taxa: boolean
+  primeiro_vencimento: string | null
+  intervalo_dias: number | null
 }
 
-/** Valida objeto “registro”; retorna o mesmo objeto tipado como record. */
+/** Valida objeto "registro"; retorna o mesmo objeto tipado como record. */
 export function parsePagamentoRowRecord(row: Record<string, unknown>): z.infer<typeof PagamentoRowSchema> {
   return PagamentoRowSchema.parse(row)
 }
@@ -83,6 +89,12 @@ function numeroNullableDetalhe(value: unknown): number | null {
   return Number(value ?? 0)
 }
 
+function stringNullable(value: unknown): string | null {
+  if (value === null || value === undefined) return null
+  const s = String(value).trim()
+  return s === '' ? null : s
+}
+
 /**
  * Alinhado ao fluxo PDF: null/undefined em campos numéricos opcionais → null.
  */
@@ -98,6 +110,8 @@ export function mapPdfPagamentoRow(row: Record<string, unknown> | null): MappedP
     num_parcelas: numeroNullablePdf(row.num_parcelas),
     taxa_servico_percentual: numeroNullablePdf(row.taxa_servico_percentual),
     aplicar_taxa: Boolean(row.aplicar_taxa),
+    primeiro_vencimento: stringNullable(row.primeiro_vencimento),
+    intervalo_dias: row.intervalo_dias != null ? numeroNullablePdf(row.intervalo_dias) : null,
   }
 }
 
@@ -116,5 +130,7 @@ export function mapPagamentoDetalheRow(row: Record<string, unknown> | null): Pag
     num_parcelas: numeroNullableDetalhe(row.num_parcelas),
     taxa_servico_percentual: numeroNullableDetalhe(row.taxa_servico_percentual),
     aplicar_taxa: Boolean(row.aplicar_taxa),
+    primeiro_vencimento: stringNullable(row.primeiro_vencimento),
+    intervalo_dias: row.intervalo_dias != null ? Number(row.intervalo_dias) : null,
   }
 }

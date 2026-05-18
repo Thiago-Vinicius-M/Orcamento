@@ -44,6 +44,7 @@ export function narrowOrcamentoRawRow(row: unknown): OrcamentoRawRow {
     clientes: narrowClientesField(o.clientes),
     created_by_user_id: o.created_by_user_id,
     created_by_name: o.created_by_name,
+    numero_pdf: o.numero_pdf,
   }
 }
 
@@ -56,6 +57,7 @@ export type OrcamentoRawRow = {
   clientes?: ClienteRaw | ClienteRaw[] | null
   created_by_user_id?: unknown
   created_by_name?: unknown
+  numero_pdf?: unknown
 }
 
 export type OrcamentoListRow = {
@@ -68,6 +70,7 @@ export type OrcamentoListRow = {
   created_by_user_id: string | null
   created_by_name: string | null
   gerado_por_nome: string
+  numero_pdf: string | null
 }
 
 export function toOrcamentoListRow(
@@ -92,5 +95,6 @@ export function toOrcamentoListRow(
     created_by_user_id: createdByUserId,
     created_by_name: createdByName,
     gerado_por_nome: createdByName ?? '—',
+    numero_pdf: typeof row.numero_pdf === 'string' ? row.numero_pdf : null,
   }
 }

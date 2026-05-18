@@ -131,7 +131,7 @@ export function OrcamentosPage() {
     filtrosAplicados.usuarioId !== ''
 
   const orcamentoMobileCard: MobileCardConfig<OrcamentoListRow> = {
-    title: (o) => `Nº ${o.id.slice(0, 8).toUpperCase()}`,
+    title: (o) => `Nº ${o.numero_pdf ?? '—'}`,
     badge: (o) => (
       <StatusPill variant={getStatusPillClassName(o.status)}>
         {formatarStatusOrcamento(o.status)}
@@ -152,7 +152,7 @@ export function OrcamentosPage() {
   }
 
   const orcamentoColumns: Column<OrcamentoListRow>[] = [
-    { header: 'Nº', accessor: (o) => o.id.slice(0, 8).toUpperCase() },
+    { header: 'Nº', accessor: (o) => o.numero_pdf ?? '—' },
     { header: 'Cliente', accessor: (o) => o.cliente_nome, cellClassName: 'table-cell-wrap' },
     { header: 'Gerado por', accessor: (o) => o.gerado_por_nome, cellClassName: 'table-cell-wrap' },
     {

@@ -1,5 +1,4 @@
 import { describe, it, expect } from 'vitest'
-import { calcularDescontoTotal, type DescontoInput } from '../calculos'
 import {
   PERCENTUAL_DESCONTO_VENDEDOR_TETO_EPS,
   descontoVendedorExcedeTeto,
@@ -46,20 +45,16 @@ describe('descontoVendedorExcedeTeto', () => {
     expect(descontoVendedorExcedeTeto(100, 99, null)).toBe(false)
   })
 
-  it('limite exato 7% alinhado a calcularDescontoTotal: não bloqueia', () => {
+  it('limite exato 7% não bloqueia', () => {
     const subtotal = 1_000
-    const desconto: DescontoInput = { tipo: 'percentual', valor: 7 }
-    const desconto_total = calcularDescontoTotal(subtotal, desconto)
-    expect(desconto_total).toBe(70)
+    const desconto_total = 70 // exatamente 7%
     expect(percentualDescontoEfetivoSobreSubtotal(subtotal, desconto_total)).toBeCloseTo(7, 12)
     expect(descontoVendedorExcedeTeto(subtotal, desconto_total, 7)).toBe(false)
   })
 
   it('ligeiramente acima de 7% (7.1%) com mesmo teto: bloqueia', () => {
     const subtotal = 1_000
-    const desconto: DescontoInput = { tipo: 'percentual', valor: 7.1 }
-    const desconto_total = calcularDescontoTotal(subtotal, desconto)
-    expect(desconto_total).toBe(71)
+    const desconto_total = 71 // 7.1%
     const efetivo = percentualDescontoEfetivoSobreSubtotal(subtotal, desconto_total)
     expect(efetivo).toBeCloseTo(7.1, 12)
     expect(descontoVendedorExcedeTeto(subtotal, desconto_total, 7)).toBe(true)

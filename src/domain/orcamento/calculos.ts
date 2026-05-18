@@ -3,11 +3,7 @@ import { parseDecimalInput } from '../financeiro/numero'
 export type ItemCalculoInput = {
   quantidade: string
   preco_unitario: string
-}
-
-export type DescontoInput = {
-  tipo: 'percentual' | 'fixo' | null
-  valor: number
+  desconto_percentual?: string
 }
 
 export type OrcamentoTotais = {
@@ -16,35 +12,35 @@ export type OrcamentoTotais = {
   total: number
 }
 
-export function calcularSubtotalItem(quantidade: number, precoUnitario: number): number {
+export function calcularSubtotalBrutoItem(quantidade: number, precoUnitario: number): number {
   return quantidade * precoUnitario
 }
 
-export function calcularDescontoTotal(subtotal: number, desconto?: DescontoInput): number {
-  if (!desconto || !desconto.tipo || desconto.valor <= 0) return 0
-
-  if (desconto.tipo === 'percentual') {
-    const pct = Math.min(desconto.valor, 100)
-    return Math.round(subtotal * pct) / 100
-  }
-
-  return Math.min(desconto.valor, subtotal)
+export function calcularSubtotalItem(
+  quantidade: number,
+  precoUnitario: number,
+  descontoPercentual = 0,
+): number {
+  const fator = Math.max(0, Math.min(100, descontoPercentual))
+  return Math.round(quantidade * precoUnitario * (1 - fator / 100) * 100) / 100
 }
 
-export function calcularTotaisOrcamento(
-  itens: ItemCalculoInput[],
-  desconto?: DescontoInput,
-): OrcamentoTotais {
-  const subtotal = itens.reduce((acc, item) => {
+export function calcularTotaisOrcamento(itens: ItemCalculoInput[]): OrcamentoTotais {
+  let subtotalBruto = 0
+  let subtotalLiquido = 0
+
+  for (const item of itens) {
     const qtd = parseDecimalInput(item.quantidade)
     const preco = parseDecimalInput(item.preco_unitario)
-    return acc + calcularSubtotalItem(qtd, preco)
-  }, 0)
+    const descPct = parseDecimalInput(item.desconto_percentual ?? '0')
+    subtotalBruto += calcularSubtotalBrutoItem(qtd, preco)
+    subtotalLiquido += calcularSubtotalItem(qtd, preco, descPct)
+  }
 
-  const desconto_total = calcularDescontoTotal(subtotal, desconto)
-  const total = Math.max(subtotal - desconto_total, 0)
+  const desconto_total = Math.round((subtotalBruto - subtotalLiquido) * 100) / 100
+  const total = Math.max(subtotalLiquido, 0)
 
-  return { subtotal, desconto_total, total }
+  return { subtotal: subtotalBruto, desconto_total, total }
 }
 
 export type PagamentoFinanciamentoInput = {

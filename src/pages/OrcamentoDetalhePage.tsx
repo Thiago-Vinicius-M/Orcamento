@@ -28,7 +28,10 @@ export function OrcamentoDetalhePage() {
         <div className="page-grid section-mt-sm">
           <OrcamentoDetalheResumo orcamento={detalhe.orcamento} />
           <OrcamentoDetalheItensList itens={detalhe.itens} orcamento={detalhe.orcamento} />
-          <OrcamentoDetalhePagamentoResumo pagamento={detalhe.pagamento} />
+          <OrcamentoDetalhePagamentoResumo
+            pagamento={detalhe.pagamento}
+            total={detalhe.orcamento.total}
+          />
           <OrcamentoDetalheAcoes
             titulo={detalhe.titulo}
             temAcoes={detalhe.temAcoes}

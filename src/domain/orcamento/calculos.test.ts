@@ -1,72 +1,50 @@
 import { describe, it, expect } from 'vitest'
 import {
   calcularSubtotalItem,
-  calcularDescontoTotal,
+  calcularSubtotalBrutoItem,
   calcularTotaisOrcamento,
   calcularResumoFinanciamento,
 } from './calculos'
-import type {
-  DescontoInput,
-  PagamentoFinanciamentoInput,
-} from './calculos'
+import type { PagamentoFinanciamentoInput } from './calculos'
 
-describe('calcularSubtotalItem', () => {
+describe('calcularSubtotalBrutoItem', () => {
   it('multiplies quantity by unit price', () => {
-    expect(calcularSubtotalItem(3, 10)).toBe(30)
+    expect(calcularSubtotalBrutoItem(3, 10)).toBe(30)
   })
 
   it('returns 0 when quantity is 0', () => {
-    expect(calcularSubtotalItem(0, 100)).toBe(0)
-  })
-
-  it('returns 0 when price is 0', () => {
-    expect(calcularSubtotalItem(5, 0)).toBe(0)
-  })
-
-  it('handles decimal values', () => {
-    expect(calcularSubtotalItem(2.5, 4.4)).toBeCloseTo(11)
+    expect(calcularSubtotalBrutoItem(0, 100)).toBe(0)
   })
 })
 
-describe('calcularDescontoTotal', () => {
-  it('returns 0 when no discount', () => {
-    expect(calcularDescontoTotal(1000)).toBe(0)
-    expect(calcularDescontoTotal(1000, undefined)).toBe(0)
+describe('calcularSubtotalItem', () => {
+  it('no discount: equals bruto', () => {
+    expect(calcularSubtotalItem(3, 10)).toBe(30)
+    expect(calcularSubtotalItem(3, 10, 0)).toBe(30)
   })
 
-  it('returns 0 when discount tipo is null', () => {
-    const desconto: DescontoInput = { tipo: null, valor: 10 }
-    expect(calcularDescontoTotal(1000, desconto)).toBe(0)
+  it('returns 0 when quantity is 0', () => {
+    expect(calcularSubtotalItem(0, 100, 10)).toBe(0)
   })
 
-  it('returns 0 when discount value is 0', () => {
-    const desconto: DescontoInput = { tipo: 'fixo', valor: 0 }
-    expect(calcularDescontoTotal(1000, desconto)).toBe(0)
+  it('returns 0 when price is 0', () => {
+    expect(calcularSubtotalItem(5, 0, 10)).toBe(0)
   })
 
-  it('returns 0 when discount value is negative', () => {
-    const desconto: DescontoInput = { tipo: 'fixo', valor: -5 }
-    expect(calcularDescontoTotal(1000, desconto)).toBe(0)
+  it('applies percentage discount', () => {
+    expect(calcularSubtotalItem(1, 100, 10)).toBe(90)
   })
 
-  it('calculates percentage discount', () => {
-    const desconto: DescontoInput = { tipo: 'percentual', valor: 10 }
-    expect(calcularDescontoTotal(1000, desconto)).toBe(100)
+  it('caps discount at 100%', () => {
+    expect(calcularSubtotalItem(1, 100, 150)).toBe(0)
   })
 
-  it('caps percentage discount at 100%', () => {
-    const desconto: DescontoInput = { tipo: 'percentual', valor: 150 }
-    expect(calcularDescontoTotal(1000, desconto)).toBe(1000)
+  it('clamps negative discount to 0', () => {
+    expect(calcularSubtotalItem(1, 100, -5)).toBe(100)
   })
 
-  it('calculates fixed discount', () => {
-    const desconto: DescontoInput = { tipo: 'fixo', valor: 50 }
-    expect(calcularDescontoTotal(1000, desconto)).toBe(50)
-  })
-
-  it('caps fixed discount at subtotal', () => {
-    const desconto: DescontoInput = { tipo: 'fixo', valor: 2000 }
-    expect(calcularDescontoTotal(1000, desconto)).toBe(1000)
+  it('handles decimal values', () => {
+    expect(calcularSubtotalItem(2.5, 4.4, 0)).toBeCloseTo(11)
   })
 })
 
@@ -84,33 +62,33 @@ describe('calcularTotaisOrcamento', () => {
     expect(result.total).toBe(350)
   })
 
-  it('applies percentage discount', () => {
-    const itens = [{ quantidade: '1', preco_unitario: '200' }]
-    const desconto: DescontoInput = { tipo: 'percentual', valor: 10 }
+  it('applies per-item percentage discount', () => {
+    const itens = [{ quantidade: '1', preco_unitario: '200', desconto_percentual: '10' }]
 
-    const result = calcularTotaisOrcamento(itens, desconto)
+    const result = calcularTotaisOrcamento(itens)
 
     expect(result.subtotal).toBe(200)
     expect(result.desconto_total).toBe(20)
     expect(result.total).toBe(180)
   })
 
-  it('applies fixed discount', () => {
-    const itens = [{ quantidade: '1', preco_unitario: '500' }]
-    const desconto: DescontoInput = { tipo: 'fixo', valor: 100 }
+  it('mixes items with and without discount', () => {
+    const itens = [
+      { quantidade: '1', preco_unitario: '100', desconto_percentual: '10' },
+      { quantidade: '1', preco_unitario: '100' },
+    ]
 
-    const result = calcularTotaisOrcamento(itens, desconto)
+    const result = calcularTotaisOrcamento(itens)
 
-    expect(result.subtotal).toBe(500)
-    expect(result.desconto_total).toBe(100)
-    expect(result.total).toBe(400)
+    expect(result.subtotal).toBe(200)
+    expect(result.desconto_total).toBe(10)
+    expect(result.total).toBe(190)
   })
 
   it('total is never negative', () => {
-    const itens = [{ quantidade: '1', preco_unitario: '50' }]
-    const desconto: DescontoInput = { tipo: 'fixo', valor: 100 }
+    const itens = [{ quantidade: '1', preco_unitario: '50', desconto_percentual: '100' }]
 
-    const result = calcularTotaisOrcamento(itens, desconto)
+    const result = calcularTotaisOrcamento(itens)
 
     expect(result.total).toBe(0)
   })

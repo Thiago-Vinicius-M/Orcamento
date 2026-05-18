@@ -23,7 +23,24 @@
       "Bash(npm test *)",
       "Bash(Get-ChildItem -Path \"e:\\\\Projetos\\\\NewOrca\\\\src\\\\pdf\\\\layout\" -Recurse)",
       "Bash(Select-Object FullName)",
-      "Bash(npx vitest *)"
+      "Bash(npx vitest *)",
+      "Bash(Get-ChildItem -Path \"e:\\\\Projetos\\\\NewOrca\" -Directory)",
+      "Bash(Get-ChildItem -Recurse -Name)",
+      "Bash(Get-Content \"e:\\\\Projetos\\\\NewOrca\\\\src\\\\styles\\\\global.css\")",
+      "Bash(Measure-Object -Line)",
+      "Bash(xargs grep -l \"sonner\\\\|toast\\\\|notification\")",
+      "Bash(xargs grep -l \"orcamento_itens\\\\|INSERT INTO\\\\|CREATE TABLE\")",
+      "Bash(npx tsc *)",
+      "Bash(Select-String -Path \"e:\\\\Projetos\\\\NewOrca\\\\src\\\\styles\\\\global.css\" -Pattern \"^/\\\\* ===|^/\\\\* ---\")",
+      "Bash(Select-Object -Last 5)",
+      "PowerShell($lines = Get-Content \"e:\\\\Projetos\\\\NewOrca\\\\src\\\\styles\\\\global.css\"; $lines.Count)",
+      "Bash(node --input-type=module)",
+      "Bash(Get-ChildItem -Path \"e:\\\\Projetos\\\\NewOrca\\\\src\\\\pdf\" -Recurse -File)",
+      "Bash(xargs grep -l \"nextOrcamentoNumeroPdf\\\\|numero_pdf\")",
+      "Bash(grep -r \"0001-A\" \"e:\\\\Projetos\\\\NewOrca\" 2>nul | head -10)"
+    ],
+    "additionalDirectories": [
+      "e:\\Projetos\\NewOrca"
     ]
   }
 }

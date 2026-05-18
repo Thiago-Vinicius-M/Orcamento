@@ -20,6 +20,7 @@ type OrcamentoItemInsert = {
   produto_id: string
   quantidade: number
   preco_unitario: number
+  desconto_percentual: number
   subtotal: number
 }
 
@@ -30,6 +31,8 @@ type OrcamentoPagamentoInsert = {
   num_parcelas?: number | null
   taxa_servico_percentual?: number | null
   aplicar_taxa?: boolean
+  primeiro_vencimento?: string | null
+  intervalo_dias?: number | null
 }
 
 export async function insertOrcamentoWithClient(client: SupabaseClient, insert: OrcamentoInsert): Promise<string> {

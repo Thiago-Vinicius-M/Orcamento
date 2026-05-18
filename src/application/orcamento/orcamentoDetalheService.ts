@@ -46,6 +46,7 @@ function mapItens(rows: Record<string, unknown>[]): OrcamentoItemDetalhe[] {
       id: String(row.id ?? ''),
       quantidade: Number(row.quantidade ?? 0),
       preco_unitario: Number(row.preco_unitario ?? 0),
+      desconto_percentual: Number(row.desconto_percentual ?? 0),
       subtotal: Number(row.subtotal ?? 0),
       produto_codigo: typeof produtos.codigo === 'string' ? produtos.codigo : '—',
       produto_nome: typeof produtos.nome === 'string' ? produtos.nome : '—',

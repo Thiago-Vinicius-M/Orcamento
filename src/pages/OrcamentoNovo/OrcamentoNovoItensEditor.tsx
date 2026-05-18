@@ -1,278 +1,174 @@
 import { useMemo } from 'react'
-import { SearchableSelect } from '../../components'
+import { EmptyState, ProdutoItemModal } from '../../components'
 import { formatCurrencyBRL } from '../../domain/financeiro/moeda'
 import { parseDecimalInput } from '../../domain/financeiro/numero'
-import { calcularSubtotalItem } from '../../domain/orcamento/calculos'
+import { calcularSubtotalBrutoItem, calcularSubtotalItem } from '../../domain/orcamento/calculos'
 import type { OrcamentoNovoForm } from '../../hooks/useOrcamentoNovoForm'
-
-/** Quantidade em unidades inteiras; decimais por peso/medida podem vir do cadastro de produto no futuro. */
-function normalizarQuantidadeInteira(raw: string): string {
-  const n = Math.max(0, Math.round(parseDecimalInput(raw)))
-  return String(n)
-}
 
 type Props = Pick<
   OrcamentoNovoForm,
   | 'produtos'
   | 'itens'
   | 'loadingRefs'
-  | 'desconto'
-  | 'setDesconto'
   | 'totais'
   | 'descontoVendedorMensagem'
-  | 'atualizarItem'
-  | 'adicionarItem'
+  | 'tetoDescontoVendedor'
+  | 'role'
+  | 'modalAberto'
+  | 'modalEditIndex'
+  | 'abrirModalNovo'
+  | 'abrirModalEditar'
+  | 'fecharModal'
+  | 'salvarItemModal'
   | 'removerItem'
-  | 'handleProdutoChange'
 >
 
 export function OrcamentoNovoItensEditor({
   produtos,
   itens,
   loadingRefs,
-  desconto,
-  setDesconto,
   totais,
   descontoVendedorMensagem,
-  atualizarItem,
-  adicionarItem,
+  tetoDescontoVendedor,
+  role,
+  modalAberto,
+  modalEditIndex,
+  abrirModalNovo,
+  abrirModalEditar,
+  fecharModal,
+  salvarItemModal,
   removerItem,
-  handleProdutoChange,
 }: Props) {
-  const produtoOptions = useMemo(
-    () =>
-      produtos.map((p) => ({
-        value: p.id,
-        label: p.codigo ? `${p.codigo} - ${p.nome}` : p.nome,
-        searchText: [p.codigo, p.nome].filter(Boolean).join(' '),
-      })),
-    [produtos],
-  )
+  const produtoMap = useMemo(() => new Map(produtos.map((p) => [p.id, p])), [produtos])
 
-  const itemsComputed = useMemo(
+  const itensComputados = useMemo(
     () =>
       itens.map((item) => {
+        const produto = produtoMap.get(item.produto_id)
         const qtd = parseDecimalInput(item.quantidade)
         const preco = parseDecimalInput(item.preco_unitario)
-        const subtotal = calcularSubtotalItem(qtd, preco)
-        const precoStr = item.preco_unitario.trim()
-        const precoExibicao =
-          precoStr === ''
-            ? item.produto_id === ''
-              ? 'Selecione o produto'
-              : '—'
-            : formatCurrencyBRL(preco)
-        return { item, subtotal, precoStr, precoExibicao }
+        const descPct = parseDecimalInput(item.desconto_percentual)
+        const bruto = calcularSubtotalBrutoItem(qtd, preco)
+        const liquido = calcularSubtotalItem(qtd, preco, descPct)
+        return { item, produto, qtd, preco, descPct, bruto, liquido }
       }),
-    [itens],
+    [itens, produtoMap],
   )
+
+  const dadosIniciais = modalEditIndex !== null ? itens[modalEditIndex] ?? null : null
 
   return (
     <section className="card">
       <header className="card-header card-header-row">
         <h2>Itens do orçamento</h2>
-        <button type="button" className="btn-secondary" onClick={adicionarItem} disabled={loadingRefs}>
+        <button
+          type="button"
+          className="btn-secondary"
+          onClick={abrirModalNovo}
+          disabled={loadingRefs}
+        >
           + Adicionar item
         </button>
       </header>
 
-      {/* Desktop: tabela tradicional */}
-      <div className="items-editor__desktop">
-        <div className="table-wrapper table-wrapper--scroll-hidden">
-          <table className="table">
-            <thead>
-              <tr>
-                <th scope="col">Produto</th>
-                <th scope="col">Qtd.</th>
-                <th scope="col">Preço unit.</th>
-                <th scope="col">Subtotal (R$)</th>
-                <th scope="col" style={{ width: '1%' }}>
-                  Ações
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {itemsComputed.map(({ item, subtotal, precoStr, precoExibicao }, index) => (
-                <tr key={index}>
-                  <td className="table-cell-wrap">
-                    <SearchableSelect
-                      id={`orc_item_produto_${index}`}
-                      ariaLabel={`Produto, item ${index + 1}`}
-                      options={produtoOptions}
-                      value={item.produto_id}
-                      onValueChange={(id) => handleProdutoChange(index, id)}
-                      disabled={loadingRefs}
-                      required
-                      emptySelectionLabel="Selecione"
-                    />
-                  </td>
-                  <td>
-                    <input
-                      className="input-control"
-                      type="number"
-                      min="0"
-                      step={1}
-                      inputMode="numeric"
-                      value={item.quantidade}
-                      onChange={(e) => atualizarItem(index, { quantidade: e.target.value })}
-                      onBlur={(e) =>
-                        atualizarItem(index, {
-                          quantidade: normalizarQuantidadeInteira(e.currentTarget.value),
-                        })
-                      }
-                      required
-                    />
-                  </td>
-                  <td>
-                    <span className={precoStr === '' ? 'text-muted' : undefined}>{precoExibicao}</span>
-                  </td>
-                  <td>R$ {subtotal.toFixed(2)}</td>
-                  <td>
-                    <button
-                      type="button"
-                      className="btn-link-danger"
-                      onClick={() => removerItem(index)}
-                      disabled={itens.length <= 1}
-                    >
-                      Remover
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      {itens.length === 0 ? (
+        <EmptyState message='Nenhum item adicionado. Clique em "+ Adicionar item" para começar.' />
+      ) : (
+        <div className="items-list" style={{ padding: '0 1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          {itensComputados.map(({ item, produto, qtd, preco, descPct, bruto, liquido }, index) => {
+            const nomeProduto = produto
+              ? (produto.codigo ? `${produto.codigo} - ${produto.nome}` : produto.nome)
+              : item.produto_id
 
-      {/* Mobile: cards verticais */}
-      <div className="items-editor__mobile">
-        {itemsComputed.map(({ item, subtotal, precoStr, precoExibicao }, index) => (
-          <div key={index} className="card items-editor-mobile-card">
-            <div className="form-row">
-              <label htmlFor={`orc_item_produto_m_${index}`}>Produto</label>
-              <SearchableSelect
-                id={`orc_item_produto_m_${index}`}
-                ariaLabel={`Produto, item ${index + 1}`}
-                options={produtoOptions}
-                value={item.produto_id}
-                onValueChange={(id) => handleProdutoChange(index, id)}
-                disabled={loadingRefs}
-                required
-                emptySelectionLabel="Selecione"
-              />
-            </div>
-            <div className="items-editor-mobile-grid">
-              <div className="form-row">
-                <label>Qtd.</label>
-                <input
-                  className="input-control"
-                  type="number"
-                  min="0"
-                  step={1}
-                  inputMode="numeric"
-                  value={item.quantidade}
-                  onChange={(e) => atualizarItem(index, { quantidade: e.target.value })}
-                  onBlur={(e) =>
-                    atualizarItem(index, {
-                      quantidade: normalizarQuantidadeInteira(e.currentTarget.value),
-                    })
-                  }
-                  required
-                />
+            return (
+              <div key={index} className="item-card">
+                <div className="item-card__info">
+                  <div className="item-card__nome">{nomeProduto}</div>
+                  <div className="item-card__meta">
+                    {qtd} × {formatCurrencyBRL(preco)}
+                    {descPct > 0 && (
+                      <span style={{ marginLeft: '0.5rem', color: 'var(--accent-green, #166534)' }}>
+                        — {descPct}% de desconto
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div className="item-card__subtotal">
+                  {descPct > 0 ? (
+                    <span>
+                      <span
+                        style={{
+                          textDecoration: 'line-through',
+                          color: 'var(--text-muted, #6b7280)',
+                          fontSize: '0.8rem',
+                          marginRight: '0.35rem',
+                        }}
+                      >
+                        {formatCurrencyBRL(bruto)}
+                      </span>
+                      {formatCurrencyBRL(liquido)}
+                    </span>
+                  ) : (
+                    formatCurrencyBRL(liquido)
+                  )}
+                </div>
+                <div className="item-card__actions">
+                  <button
+                    type="button"
+                    className="btn-secondary"
+                    style={{ padding: '0.35rem 0.75rem', fontSize: '0.82rem' }}
+                    onClick={() => abrirModalEditar(index)}
+                  >
+                    Editar
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-link-danger"
+                    onClick={() => removerItem(index)}
+                  >
+                    Remover
+                  </button>
+                </div>
               </div>
-              <div className="form-row">
-                <label>Preço unit.</label>
-                <span className={precoStr === '' ? 'text-muted' : undefined}>{precoExibicao}</span>
-              </div>
-            </div>
-            <div className="items-editor-mobile-footer">
-              <span>
-                <span className="mobile-card__label">Subtotal</span>
-                <strong className="mobile-card__value mobile-card__value--emphasis">
-                  R$ {subtotal.toFixed(2)}
-                </strong>
-              </span>
-              <button
-                type="button"
-                className="btn-link-danger"
-                onClick={() => removerItem(index)}
-                disabled={itens.length <= 1}
-              >
-                Remover
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="form-grid" style={{ padding: '1rem' }}>
-        <div className="form-row">
-          <label htmlFor="desc_tipo">Tipo de desconto</label>
-          <select
-            id="desc_tipo"
-            value={desconto.tipo}
-            onChange={(e) =>
-              setDesconto((prev) => ({
-                ...prev,
-                tipo: e.target.value as typeof desconto.tipo,
-                valor: e.target.value === '' ? '' : prev.valor,
-              }))
-            }
-          >
-            <option value="">Sem desconto</option>
-            <option value="percentual">Percentual (%)</option>
-            <option value="fixo">Valor fixo (R$)</option>
-          </select>
+            )
+          })}
         </div>
+      )}
 
-        {desconto.tipo !== '' && (
-          <div className="form-row">
-            <label htmlFor="desc_valor">
-              {desconto.tipo === 'percentual' ? 'Desconto (%)' : 'Desconto (R$)'}
-            </label>
-            <input
-              id="desc_valor"
-              type="number"
-              min="0"
-              step="0.01"
-              max={desconto.tipo === 'percentual' ? '100' : undefined}
-              value={desconto.valor}
-              onChange={(e) => setDesconto((prev) => ({ ...prev, valor: e.target.value }))}
-              placeholder={desconto.tipo === 'percentual' ? 'Ex: 10' : 'Ex: 50.00'}
-              aria-invalid={descontoVendedorMensagem != null}
-              aria-describedby={descontoVendedorMensagem != null ? 'desc_teto_vendedor' : undefined}
-            />
-          </div>
-        )}
-
-        {descontoVendedorMensagem != null && (
-          <div
-            id="desc_teto_vendedor"
-            className="form-error"
-            role="alert"
-            aria-live="assertive"
-          >
-            {descontoVendedorMensagem}
-          </div>
-        )}
-      </div>
+      {descontoVendedorMensagem && (
+        <div className="form-error" role="alert" aria-live="assertive" style={{ margin: '0.5rem 1rem' }}>
+          {descontoVendedorMensagem}
+        </div>
+      )}
 
       <footer className="card-footer card-footer-right">
         <div className="totais-grid">
           <div>
             <span className="text-muted">Subtotal</span>
-            <div>R$ {totais.subtotal.toFixed(2)}</div>
+            <div>{formatCurrencyBRL(totais.subtotal)}</div>
           </div>
           <div>
             <span className="text-muted">Descontos</span>
-            <div>R$ {totais.desconto_total.toFixed(2)}</div>
+            <div>{formatCurrencyBRL(totais.desconto_total)}</div>
           </div>
           <div>
             <span className="text-muted">Total</span>
-            <div className="totais-total">R$ {totais.total.toFixed(2)}</div>
+            <div className="totais-total">{formatCurrencyBRL(totais.total)}</div>
           </div>
         </div>
       </footer>
+
+      <ProdutoItemModal
+        aberto={modalAberto}
+        editIndex={modalEditIndex}
+        dadosIniciais={dadosIniciais}
+        produtos={produtos}
+        loadingProdutos={loadingRefs}
+        tetoDesconto={tetoDescontoVendedor}
+        role={role}
+        onConfirmar={salvarItemModal}
+        onFechar={fecharModal}
+      />
     </section>
   )
 }

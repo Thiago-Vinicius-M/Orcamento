@@ -3,13 +3,10 @@ import { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useAuthSession } from '../auth/useAuthSession'
-import { parseDecimalInput } from '../domain/financeiro/numero'
 import { calcularTotaisOrcamento } from '../domain/orcamento/calculos'
-import type { DescontoInput } from '../domain/orcamento/calculos'
 import { descontoVendedorExcedeTeto, mensagemValorMaximoDescontoVendedor } from '../domain/orcamento/descontoVendedor'
 import {
   criarOrcamento,
-  type DescontoForm,
   type ItemForm,
   type PagamentoForm,
 } from '../application/orcamento/orcamentoNovoService'
@@ -37,17 +34,19 @@ export function useOrcamentoNovoForm() {
   const [error, setError] = useState<string | null>(null)
 
   const [clienteId, setClienteId] = useState('')
-  const [itens, setItens] = useState<ItemForm[]>([
-    { produto_id: '', quantidade: '1', preco_unitario: '' },
-  ])
+  const [itens, setItens] = useState<ItemForm[]>([])
   const [pagamento, setPagamento] = useState<PagamentoForm>({
     tipo: 'dinheiro',
     valor_entrada: '',
     num_parcelas: '',
     taxa_servico_percentual: '',
     aplicar_taxa: false,
+    primeiro_vencimento: '',
+    intervalo_dias: '',
   })
-  const [desconto, setDesconto] = useState<DescontoForm>({ tipo: '', valor: '' })
+
+  const [modalAberto, setModalAberto] = useState(false)
+  const [modalEditIndex, setModalEditIndex] = useState<number | null>(null)
 
   const carregarRefs = useCallback(async (signal: { cancelled: boolean }) => {
     if (signal.cancelled) return
@@ -87,51 +86,56 @@ export function useOrcamentoNovoForm() {
 
   useAsyncEffect(carregarRefs, [carregarRefs])
 
-  const descontoInput: DescontoInput | undefined = useMemo(() => {
-    if (!desconto.tipo) return undefined
-    return { tipo: desconto.tipo as 'percentual' | 'fixo', valor: parseDecimalInput(desconto.valor) }
-  }, [desconto])
+  const totais = useMemo(() => calcularTotaisOrcamento(itens), [itens])
 
-  const totais = useMemo(() => calcularTotaisOrcamento(itens, descontoInput), [itens, descontoInput])
-
-  /**
-   * Trava de UI aplicada apenas ao perfil `vendedor` quando há teto configurado.
-   * Gerente sempre passa livre no cliente (validação server-side cobre defesa em profundidade).
-   */
   const descontoVendedorBloqueado = useMemo(() => {
-    if (role !== 'vendedor' || tetoDescontoVendedor === null) {
-      return false
-    }
+    if (role !== 'vendedor' || tetoDescontoVendedor === null) return false
     return descontoVendedorExcedeTeto(totais.subtotal, totais.desconto_total, tetoDescontoVendedor)
   }, [role, tetoDescontoVendedor, totais.subtotal, totais.desconto_total])
 
   const descontoVendedorMensagem = useMemo<string | null>(() => {
-    if (!descontoVendedorBloqueado || tetoDescontoVendedor === null) {
-      return null
-    }
+    if (!descontoVendedorBloqueado || tetoDescontoVendedor === null) return null
     return mensagemValorMaximoDescontoVendedor(tetoDescontoVendedor)
   }, [descontoVendedorBloqueado, tetoDescontoVendedor])
 
-  const submitDisabled = saving || descontoVendedorBloqueado
+  const submitDisabled = saving || descontoVendedorBloqueado || itens.length === 0
 
-  function atualizarItem(index: number, patch: Partial<ItemForm>) {
-    setItens((prev) => prev.map((item, i) => (i === index ? { ...item, ...patch } : item)))
+  function abrirModalNovo() {
+    setModalEditIndex(null)
+    setModalAberto(true)
   }
 
-  function adicionarItem() {
-    setItens((prev) => [...prev, { produto_id: '', quantidade: '1', preco_unitario: '' }])
+  function abrirModalEditar(index: number) {
+    setModalEditIndex(index)
+    setModalAberto(true)
+  }
+
+  function fecharModal() {
+    setModalAberto(false)
+    setModalEditIndex(null)
+  }
+
+  function salvarItemModal(item: ItemForm, editIndex: number | null) {
+    const itensAtualizados =
+      editIndex !== null
+        ? itens.map((it, i) => (i === editIndex ? item : it))
+        : [...itens, item]
+
+    if (role === 'vendedor' && tetoDescontoVendedor !== null) {
+      const novosTotais = calcularTotaisOrcamento(itensAtualizados)
+      if (descontoVendedorExcedeTeto(novosTotais.subtotal, novosTotais.desconto_total, tetoDescontoVendedor)) {
+        toast.error(mensagemValorMaximoDescontoVendedor(tetoDescontoVendedor))
+        return
+      }
+    }
+
+    setItens(itensAtualizados)
+    fecharModal()
+    toast.success(editIndex !== null ? 'Item atualizado.' : 'Item adicionado.')
   }
 
   function removerItem(index: number) {
-    setItens((prev) => (prev.length <= 1 ? prev : prev.filter((_, i) => i !== index)))
-  }
-
-  function handleProdutoChange(index: number, produtoId: string) {
-    const produto = produtos.find((p) => p.id === produtoId)
-    atualizarItem(index, {
-      produto_id: produtoId,
-      preco_unitario: produto ? produto.preco_unitario.toFixed(2) : '',
-    })
+    setItens((prev) => prev.filter((_, i) => i !== index))
   }
 
   async function handleSubmit(event: FormEvent) {
@@ -151,7 +155,6 @@ export function useOrcamentoNovoForm() {
         itens,
         pagamento,
         totais,
-        desconto,
       })
       toast.success('Orçamento criado com sucesso!')
       navigate(`/orcamentos/${orcamentoId}`)
@@ -175,16 +178,19 @@ export function useOrcamentoNovoForm() {
     itens,
     pagamento,
     setPagamento,
-    desconto,
-    setDesconto,
     totais,
     descontoVendedorBloqueado,
     descontoVendedorMensagem,
     submitDisabled,
-    atualizarItem,
-    adicionarItem,
+    tetoDescontoVendedor,
+    role,
+    modalAberto,
+    modalEditIndex,
+    abrirModalNovo,
+    abrirModalEditar,
+    fecharModal,
+    salvarItemModal,
     removerItem,
-    handleProdutoChange,
     handleSubmit,
     navigate,
   }

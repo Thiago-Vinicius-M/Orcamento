@@ -34,6 +34,7 @@ const ORCAMENTO_LIST_SELECT = `
   created_at,
   validade_ate,
   total,
+  numero_pdf,
   created_by_user_id,
   created_by_name,
   clientes!inner ( nome )
@@ -169,6 +170,7 @@ export async function loadOrcamentoDetalheRawWithClient(
           id,
           quantidade,
           preco_unitario,
+          desconto_percentual,
           subtotal,
           produtos!inner ( codigo, nome )
         `,
@@ -183,7 +185,9 @@ export async function loadOrcamentoDetalheRawWithClient(
           valor_entrada,
           num_parcelas,
           taxa_servico_percentual,
-          aplicar_taxa
+          aplicar_taxa,
+          primeiro_vencimento,
+          intervalo_dias
         `,
       )
       .eq('orcamento_id', orcamentoId)

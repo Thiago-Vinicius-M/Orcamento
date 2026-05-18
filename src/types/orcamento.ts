@@ -15,7 +15,9 @@ export const OrcamentoPagamentoSchema = z.object({
   valor_entrada: z.number().nonnegative().optional(),
   num_parcelas: z.number().int().positive().optional(),
   taxa_servico_percentual: z.number().nonnegative().optional(),
-  aplicar_taxa: z.boolean().optional()
+  aplicar_taxa: z.boolean().optional(),
+  primeiro_vencimento: z.string().optional(),
+  intervalo_dias: z.number().int().positive().optional(),
 });
 
 export const EmpresaSchema = z.object({

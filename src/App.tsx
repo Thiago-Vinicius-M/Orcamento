@@ -6,6 +6,7 @@ import { RequireAuth } from './auth/RequireAuth'
 import { RequireRole } from './auth/RequireRole'
 import { LazyRoute } from './components/LazyRoute'
 import { LoadingState } from './components/LoadingState'
+import { ConfirmProvider } from './components/ConfirmModal'
 
 const ClientesPage = lazy(() => import('./pages/ClientesPage').then(m => ({ default: m.ClientesPage })))
 const ConfiguracoesPage = lazy(() => import('./pages/ConfiguracoesPage').then(m => ({ default: m.ConfiguracoesPage })))
@@ -31,6 +32,7 @@ const SuspenseFallback = <LoadingState message="Carregando página..." />
 
 export default function App() {
   return (
+    <ConfirmProvider>
     <BrowserRouter>
       <Toaster position="top-right" richColors closeButton duration={4000} />
       <Routes>
@@ -125,5 +127,6 @@ export default function App() {
         </Route>
       </Routes>
     </BrowserRouter>
+    </ConfirmProvider>
   )
 }

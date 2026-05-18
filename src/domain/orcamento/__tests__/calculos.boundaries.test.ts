@@ -1,21 +1,17 @@
 import { describe, it, expect } from 'vitest'
 import {
-  calcularDescontoTotal,
+  calcularSubtotalItem,
   calcularResumoFinanciamento,
-  type DescontoInput,
   type PagamentoFinanciamentoInput,
 } from '../calculos'
 
-describe('calcularDescontoTotal (fronteiras)', () => {
-  it('percentual exatamente 100% zera o subtotal no desconto', () => {
-    const desconto: DescontoInput = { tipo: 'percentual', valor: 100 }
-    expect(calcularDescontoTotal(1_234.56, desconto)).toBe(1_234.56)
+describe('calcularSubtotalItem (fronteiras)', () => {
+  it('desconto exatamente 100% zera o subtotal', () => {
+    expect(calcularSubtotalItem(2, 500, 100)).toBe(0)
   })
 
-  it('fixo igual ao subtotal retorna o próprio subtotal', () => {
-    const sub = 987.65
-    const desconto: DescontoInput = { tipo: 'fixo', valor: sub }
-    expect(calcularDescontoTotal(sub, desconto)).toBe(sub)
+  it('desconto exatamente 0% não altera subtotal', () => {
+    expect(calcularSubtotalItem(2, 500, 0)).toBe(1000)
   })
 })
 

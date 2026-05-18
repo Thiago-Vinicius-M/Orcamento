@@ -32,16 +32,23 @@ export function OrcamentoNovoPage() {
           produtos={form.produtos}
           itens={form.itens}
           loadingRefs={form.loadingRefs}
-          desconto={form.desconto}
-          setDesconto={form.setDesconto}
           totais={form.totais}
           descontoVendedorMensagem={form.descontoVendedorMensagem}
-          atualizarItem={form.atualizarItem}
-          adicionarItem={form.adicionarItem}
+          tetoDescontoVendedor={form.tetoDescontoVendedor}
+          role={form.role}
+          modalAberto={form.modalAberto}
+          modalEditIndex={form.modalEditIndex}
+          abrirModalNovo={form.abrirModalNovo}
+          abrirModalEditar={form.abrirModalEditar}
+          fecharModal={form.fecharModal}
+          salvarItemModal={form.salvarItemModal}
           removerItem={form.removerItem}
-          handleProdutoChange={form.handleProdutoChange}
         />
-        <OrcamentoNovoCondicaoPagamento pagamento={form.pagamento} setPagamento={form.setPagamento} />
+        <OrcamentoNovoCondicaoPagamento
+          pagamento={form.pagamento}
+          setPagamento={form.setPagamento}
+          totais={form.totais}
+        />
         <OrcamentoNovoAcoes saving={form.saving} submitDisabled={form.submitDisabled} navigate={form.navigate} />
       </form>
     </>

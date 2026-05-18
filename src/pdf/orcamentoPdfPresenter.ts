@@ -2,12 +2,23 @@ import { formatDate } from "../domain/datas/data";
 import { formatCurrencyBRL } from "../domain/financeiro/moeda";
 import { calcularResumoFinanciamento } from "../domain/orcamento/calculos";
 import { buildPagamentoResumoPdf, pagamentoFromPdfModel } from "../domain/orcamento/pagamento";
+import {
+  calcularParcelasCredito,
+  calcularParcelasBoleto,
+  gerarVencimentosBoleto,
+  formatarDataBR,
+} from "../domain/orcamento/parcelamento";
 import { calcularValidade30Dias } from "../domain/orcamento/validade";
 import type { Orcamento } from "../types/orcamento";
 
 export type PagamentoDetalheViewModel =
   | { tipo: "titulo"; texto: string }
-  | { tipo: "linha"; rotulo: string; valor: string };
+  | { tipo: "linha"; rotulo: string; valor: string }
+  | { tipo: "resumo"; texto: string }
+  | { tipo: "aviso"; texto: string }
+  | { tipo: "tabela-boleto"; parcelas: Array<{ numero: number; data: string; valor: string }> }
+  | { tipo: "credito-card"; parcelamentoTexto: string; valorTotal: string; numParcelasTexto: string; valorParcelaTexto: string }
+  | { tipo: "boleto-chips"; primVencTexto: string; intervaloTexto: string; numParcelasTexto: string; valorParcelaTexto: string };
 
 export interface OrcamentoPdfItemViewModel {
   descricao: string;
@@ -52,6 +63,8 @@ export interface OrcamentoPdfViewModel {
   pagamentoResumo: string;
   /** Detalhes estruturados de pagamento para layout hierárquico no PDF. */
   pagamentoDetalhes: PagamentoDetalheViewModel[];
+  /** Resumo financeiro para coluna direita (apenas boleto). */
+  pagamentoResumoBox?: Array<{ rotulo: string; valor: string; destaque?: boolean }>;
   avisoValidade: string;
   /** Texto padrão de termos para o rodapé do PDF. */
   termosCondicoes: string;
@@ -106,16 +119,81 @@ function buildPagamentoResumo(orcamento: Orcamento): string {
   });
 }
 
-const LABELS_PAGAMENTO: Record<string, string> = {
+const LABELS_PAGAMENTO_SIMPLES: Record<string, string> = {
   dinheiro: "À vista — Dinheiro",
   pix: "À vista — Pix",
   debito: "Débito",
-  credito: "Crédito",
-  boleto: "Boleto",
 };
+
+const AVISO_CREDITO =
+  "Valores podem sofrer alteração devido a juros da credenciadora de cartão.";
+
+const AVISO_BOLETO_SEM_DATAS =
+  "Configure o primeiro vencimento e intervalo para visualizar o calendário de parcelas.";
 
 function buildPagamentoDetalhes(orcamento: Orcamento): PagamentoDetalheViewModel[] {
   const tipo = orcamento.pagamento.tipo;
+
+  if (tipo === "credito") {
+    const numParcelas = orcamento.pagamento.num_parcelas ?? 1;
+    const parcelas = calcularParcelasCredito(orcamento.total, numParcelas);
+    const valorParcela = parcelas[0]?.valor ?? orcamento.total;
+    const parcelamentoTexto =
+      numParcelas <= 1
+        ? "À vista"
+        : `${numParcelas}× de ${formatCurrency(valorParcela)}`;
+    return [
+      {
+        tipo: "credito-card",
+        parcelamentoTexto,
+        valorTotal: formatCurrency(orcamento.total),
+        numParcelasTexto: String(numParcelas),
+        valorParcelaTexto: formatCurrency(valorParcela),
+      },
+      { tipo: "aviso", texto: AVISO_CREDITO },
+    ];
+  }
+
+  if (tipo === "boleto") {
+    const numParcelas = orcamento.pagamento.num_parcelas ?? 1;
+    const primVenc = orcamento.pagamento.primeiro_vencimento;
+    const intervalo = orcamento.pagamento.intervalo_dias;
+
+    if (primVenc && intervalo) {
+      const datas = gerarVencimentosBoleto(primVenc, intervalo, numParcelas);
+      const parcelasBoleto = calcularParcelasBoleto(orcamento.total, datas);
+      const valorParcela = parcelasBoleto[0]?.valor ?? orcamento.total;
+      return [
+        {
+          tipo: "boleto-chips",
+          primVencTexto: formatarDataBR(primVenc),
+          intervaloTexto: `${intervalo} dias`,
+          numParcelasTexto: String(numParcelas),
+          valorParcelaTexto: formatCurrency(valorParcela),
+        },
+        {
+          tipo: "tabela-boleto",
+          parcelas: parcelasBoleto.map((p) => ({
+            numero: p.numero,
+            data: formatarDataBR(p.data),
+            valor: formatCurrency(p.valor),
+          })),
+        },
+      ];
+    }
+    // Boleto sem datas configuradas
+    const valorParcelaEst = numParcelas > 0 ? orcamento.total / numParcelas : orcamento.total;
+    return [
+      {
+        tipo: "boleto-chips",
+        primVencTexto: "—",
+        intervaloTexto: intervalo ? `${intervalo} dias` : "—",
+        numParcelasTexto: String(numParcelas),
+        valorParcelaTexto: formatCurrency(valorParcelaEst),
+      },
+      { tipo: "aviso", texto: AVISO_BOLETO_SEM_DATAS },
+    ];
+  }
 
   if (tipo === "financiamento") {
     const { entrada, valorFinanciado, parcelas, taxa, aplicarTaxa, valorParcela } =
@@ -136,8 +214,7 @@ function buildPagamentoDetalhes(orcamento: Orcamento): PagamentoDetalheViewModel
       { tipo: "titulo", texto: "Financiamento" },
       { tipo: "linha", rotulo: "Entrada", valor: formatCurrency(entrada) },
       { tipo: "linha", rotulo: "Valor financiado", valor: formatCurrency(valorFinanciado) },
-      { tipo: "linha", rotulo: "Parcelas", valor: `${parcelas}×` },
-      { tipo: "linha", rotulo: "Valor por parcela", valor: formatCurrency(valorParcela) },
+      { tipo: "resumo", texto: `${parcelas}× de ${formatCurrency(valorParcela)}` },
     ];
 
     if (aplicarTaxa && taxa > 0) {
@@ -152,8 +229,18 @@ function buildPagamentoDetalhes(orcamento: Orcamento): PagamentoDetalheViewModel
     return result;
   }
 
-  const label = LABELS_PAGAMENTO[tipo] ?? tipo;
+  const label = LABELS_PAGAMENTO_SIMPLES[tipo] ?? tipo;
   return [{ tipo: "titulo", texto: label }];
+}
+
+function buildPagamentoResumoBox(orcamento: Orcamento): OrcamentoPdfViewModel["pagamentoResumoBox"] {
+  if (orcamento.pagamento.tipo !== "boleto") return undefined;
+  const numParcelas = orcamento.pagamento.num_parcelas ?? 1;
+  return [
+    { rotulo: "Valor total", valor: formatCurrency(orcamento.total) },
+    { rotulo: "Quantidade de parcelas", valor: String(numParcelas) },
+    { rotulo: "Valor total da negociação", valor: formatCurrency(orcamento.total), destaque: true },
+  ];
 }
 
 const TERMOS_PADRAO_PDF =
@@ -220,6 +307,7 @@ export function apresentarOrcamentoPdf(
     },
     pagamentoResumo: buildPagamentoResumo(orcamento),
     pagamentoDetalhes: buildPagamentoDetalhes(orcamento),
+    pagamentoResumoBox: buildPagamentoResumoBox(orcamento),
     termosCondicoes: TERMOS_PADRAO_PDF,
     avisoValidade:
       "Este orçamento é válido somente até a data indicada acima. Valores podem sofrer alteração após o vencimento.",

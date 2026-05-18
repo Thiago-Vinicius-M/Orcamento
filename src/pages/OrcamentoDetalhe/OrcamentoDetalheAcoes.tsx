@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom'
 import { ActionButton } from '../../components'
 
 type Props = {
@@ -33,13 +34,17 @@ export function OrcamentoDetalheAcoes({
   onCancelar,
   onExcluir,
 }: Props) {
-  if (!temAcoes) return null
+  const navigate = useNavigate()
 
   return (
     <section className="card">
-      <header className="card-header">
+      <header className="card-header card-header-row">
         <h2>Ações</h2>
+        <ActionButton variant="ghost" onClick={() => navigate(-1)}>
+          Voltar
+        </ActionButton>
       </header>
+      {temAcoes && (
       <div className="actions-row">
         {mostrarGerarPdf && (
           <ActionButton
@@ -96,6 +101,7 @@ export function OrcamentoDetalheAcoes({
           </ActionButton>
         )}
       </div>
+      )}
     </section>
   )
 }

@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
+import { useConfirm } from '../components/ConfirmModal'
 import { carregarOrcamentoDetalhe } from '../application/orcamento/orcamentoDetalheService'
 import { gerarEBaixarPdfOrcamento } from '../application/orcamento/orcamentoPdfClientService'
 import {
@@ -27,6 +28,7 @@ import { useAsyncEffect } from './useAsyncEffect'
 export function useOrcamentoDetalhe(orcamentoId: string | undefined) {
   const navigate = useNavigate()
   const { role } = useUserRole()
+  const confirm = useConfirm()
   const [orcamento, setOrcamento] = useState<OrcamentoDetalhe | null>(null)
   const [itens, setItens] = useState<OrcamentoItemDetalhe[]>([])
   const [pagamento, setPagamento] = useState<OrcamentoPagamentoDetalhe | null>(null)
@@ -76,10 +78,12 @@ export function useOrcamentoDetalhe(orcamentoId: string | undefined) {
 
   async function executarAcao(
     acao: () => Promise<void>,
+    confirmTitle: string,
     confirmMsg: string,
     successMsg: string,
   ) {
-    if (!window.confirm(confirmMsg)) return
+    const confirmed = await confirm({ title: confirmTitle, message: confirmMsg, variant: 'warning' })
+    if (!confirmed) return
     setActionLoading(true)
     setError(null)
     try {
@@ -99,6 +103,7 @@ export function useOrcamentoDetalhe(orcamentoId: string | undefined) {
     if (!orcamento) return
     void executarAcao(
       () => aprovarOrcamento(orcamento.id, orcamento.status, role),
+      'Aprovar Orçamento',
       'Tem certeza que deseja aprovar este orçamento?',
       'Orçamento aprovado com sucesso!',
     )
@@ -108,6 +113,7 @@ export function useOrcamentoDetalhe(orcamentoId: string | undefined) {
     if (!orcamento) return
     void executarAcao(
       () => reprovarOrcamento(orcamento.id, orcamento.status, role),
+      'Reprovar Orçamento',
       'Tem certeza que deseja reprovar este orçamento?',
       'Orçamento reprovado.',
     )
@@ -117,6 +123,7 @@ export function useOrcamentoDetalhe(orcamentoId: string | undefined) {
     if (!orcamento) return
     void executarAcao(
       () => cancelarOrcamento(orcamento.id, orcamento.status, role),
+      'Cancelar Orçamento',
       'Tem certeza que deseja cancelar este orçamento?',
       'Orçamento cancelado.',
     )
@@ -138,24 +145,27 @@ export function useOrcamentoDetalhe(orcamentoId: string | undefined) {
     }
   }
 
-  function handleExcluir() {
+  async function handleExcluir() {
     if (!orcamento) return
-    const confirmMsg = 'Tem certeza que deseja EXCLUIR este orçamento? Esta ação é irreversível.'
-    if (!window.confirm(confirmMsg)) return
+    const confirmed = await confirm({
+      title: 'Excluir Orçamento',
+      message: 'Tem certeza que deseja EXCLUIR este orçamento? Esta ação é irreversível.',
+      variant: 'danger',
+      confirmLabel: 'Excluir',
+    })
+    if (!confirmed) return
     setActionLoading(true)
     setError(null)
-    void (async () => {
-      try {
-        await excluirOrcamento(orcamento.id, orcamento.status, role)
-        toast.success('Orçamento excluído com sucesso.')
-        navigate('/orcamentos')
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : 'Erro ao excluir orçamento.'
-        setError(msg)
-        toast.error(msg)
-        setActionLoading(false)
-      }
-    })()
+    try {
+      await excluirOrcamento(orcamento.id, orcamento.status, role)
+      toast.success('Orçamento excluído com sucesso.')
+      navigate('/orcamentos')
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Erro ao excluir orçamento.'
+      setError(msg)
+      toast.error(msg)
+      setActionLoading(false)
+    }
   }
 
   const titulo = useMemo(

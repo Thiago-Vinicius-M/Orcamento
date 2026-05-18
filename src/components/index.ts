@@ -17,3 +17,4 @@ export {
   type SearchableSelectOption,
   type SearchableSelectProps,
 } from './SearchableSelect'
+export { ProdutoItemModal } from './ProdutoItemModal'

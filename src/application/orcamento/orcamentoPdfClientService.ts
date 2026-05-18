@@ -108,6 +108,8 @@ function mapPdfRawToOrcamento(raw: OrcamentoPdfDataRaw): Orcamento {
       num_parcelas: pagamento.num_parcelas ?? undefined,
       taxa_servico_percentual: pagamento.taxa_servico_percentual ?? undefined,
       aplicar_taxa: pagamento.aplicar_taxa,
+      primeiro_vencimento: pagamento.primeiro_vencimento ?? undefined,
+      intervalo_dias: pagamento.intervalo_dias ?? undefined,
     },
     observacoes: undefined,
     gerado_por_nome: (() => {

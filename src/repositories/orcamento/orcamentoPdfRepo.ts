@@ -212,7 +212,9 @@ export async function loadOrcamentoPdfDataWithClient(
           valor_entrada,
           num_parcelas,
           taxa_servico_percentual,
-          aplicar_taxa
+          aplicar_taxa,
+          primeiro_vencimento,
+          intervalo_dias
         `,
       )
       .eq('orcamento_id', orcamentoId)

@@ -41,6 +41,7 @@ exports[`orcamentoPdf caracterização (Fase 0) > ViewModel snapshot 'aVistaDinh
     },
   ],
   "pagamentoResumo": "Forma: dinheiro",
+  "pagamentoResumoBox": undefined,
   "rodape": {
     "contato": "(11) 3000-0000 | contato@fixtures.example",
     "empresaNome": "Empresa Fixtures LTDA",
@@ -103,6 +104,7 @@ exports[`orcamentoPdf caracterização (Fase 0) > ViewModel snapshot 'descontoFi
     },
   ],
   "pagamentoResumo": "Forma: dinheiro",
+  "pagamentoResumoBox": undefined,
   "rodape": {
     "contato": "(11) 3000-0000 | contato@fixtures.example",
     "empresaNome": "Empresa Fixtures LTDA",
@@ -165,6 +167,7 @@ exports[`orcamentoPdf caracterização (Fase 0) > ViewModel snapshot 'descontoPe
     },
   ],
   "pagamentoResumo": "Forma: dinheiro",
+  "pagamentoResumoBox": undefined,
   "rodape": {
     "contato": "(11) 3000-0000 | contato@fixtures.example",
     "empresaNome": "Empresa Fixtures LTDA",
@@ -236,14 +239,8 @@ exports[`orcamentoPdf caracterização (Fase 0) > ViewModel snapshot 'financiame
       "valor": "R$ 1.600,00",
     },
     {
-      "rotulo": "Parcelas",
-      "tipo": "linha",
-      "valor": "8×",
-    },
-    {
-      "rotulo": "Valor por parcela",
-      "tipo": "linha",
-      "valor": "R$ 206,50",
+      "texto": "8× de R$ 206,50",
+      "tipo": "resumo",
     },
     {
       "rotulo": "Taxa de serviço",
@@ -252,6 +249,7 @@ exports[`orcamentoPdf caracterização (Fase 0) > ViewModel snapshot 'financiame
     },
   ],
   "pagamentoResumo": "Forma: financiamento | Entrada: R$ 400,00 | Valor financiado: R$ 1.600,00 | Taxa serviço: 3.25% | Parcelas: 8 x R$ 206,50 | Incluindo R$ 6,50 de taxa por parcela",
+  "pagamentoResumoBox": undefined,
   "rodape": {
     "contato": "(11) 3000-0000 | contato@fixtures.example",
     "empresaNome": "Empresa Fixtures LTDA",
@@ -313,6 +311,7 @@ exports[`orcamentoPdf caracterização (Fase 0) > ViewModel snapshot 'semGeradoP
     },
   ],
   "pagamentoResumo": "Forma: dinheiro",
+  "pagamentoResumoBox": undefined,
   "rodape": {
     "contato": "(11) 3000-0000 | contato@fixtures.example",
     "empresaNome": "Empresa Fixtures LTDA",
@@ -376,6 +375,7 @@ exports[`orcamentoPdf caracterização (Fase 0) > ViewModel snapshot comLogo > v
     },
   ],
   "pagamentoResumo": "Forma: dinheiro",
+  "pagamentoResumoBox": undefined,
   "rodape": {
     "contato": "(11) 3000-0000 | contato@fixtures.example",
     "empresaNome": "Empresa Fixtures LTDA",

@@ -1,6 +1,7 @@
 import type { FormEvent } from 'react'
 import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
+import { useConfirm } from '../components/ConfirmModal'
 import { matchesSearch } from '../lib/searchNormalize'
 import { useAuthSession } from '../auth/useAuthSession'
 import { formatCurrencyBRL } from '../domain/financeiro/moeda'
@@ -21,6 +22,7 @@ type FormState = {
 }
 
 export function ProdutosPage() {
+  const confirm = useConfirm()
   const { role } = useAuthSession()
   const readOnly = role === 'vendedor'
 
@@ -73,9 +75,12 @@ export function ProdutosPage() {
   }
 
   async function handleDelete(produto: Produto) {
-    const confirmar = window.confirm(
-      `Remover produto "${produto.nome}"? Esta ação não poderá ser desfeita.`,
-    )
+    const confirmar = await confirm({
+      title: 'Excluir Produto',
+      message: `Remover produto "${produto.nome}"? Esta ação não poderá ser desfeita.`,
+      variant: 'danger',
+      confirmLabel: 'Excluir',
+    })
     if (!confirmar) return
 
     try {
