@@ -2,6 +2,7 @@ import { z } from 'zod'
 
 import { resolveCompanyLogoSignedUrl, toCompanyLogoPath } from '../../domain/empresa/companyLogo'
 import { isOrcamentoStatus } from '../../domain/orcamento/status'
+import { PAYMENT_TYPES } from '../../domain/pagamento/PaymentTypeRegistry'
 import { getDefaultSupabase } from '../../lib/supabaseClient'
 import { gerarPdfOrcamento } from '../../pdf/orcamentoPdf'
 import {
@@ -10,7 +11,7 @@ import {
 } from '../../repositories/orcamento/orcamentoPdfRepo'
 import { OrcamentoSchema, type Orcamento } from '../../types/orcamento'
 
-const pagamentoTipoSchema = z.enum(['dinheiro', 'debito', 'credito', 'pix', 'boleto', 'financiamento'])
+const pagamentoTipoSchema = z.enum(PAYMENT_TYPES)
 
 function optionalEmail(value: string | null | undefined): string | undefined {
   if (value == null || String(value).trim() === '') {
@@ -43,6 +44,18 @@ function baixarBlobPdf(blob: Blob, nomeArquivo: string): void {
   URL.revokeObjectURL(url)
 }
 
+function validatePagamentoIntegridade(pagamento: NonNullable<OrcamentoPdfDataRaw['pagamento']>): void {
+  if (pagamento.tipo === 'boleto' && !pagamento.num_parcelas) {
+    throw new Error('Dados de boleto incompletos: num_parcelas é obrigatório.')
+  }
+  if (pagamento.tipo === 'credito' && !pagamento.num_parcelas) {
+    throw new Error('Dados de crédito incompletos: num_parcelas é obrigatório.')
+  }
+  if (pagamento.tipo === 'financiamento' && pagamento.valor_entrada == null) {
+    throw new Error('Dados de financiamento incompletos: valor_entrada é obrigatório.')
+  }
+}
+
 function mapPdfRawToOrcamento(raw: OrcamentoPdfDataRaw): Orcamento {
   const { orcamento, empresa, cliente, itens, pagamento } = raw
 
@@ -63,6 +76,8 @@ function mapPdfRawToOrcamento(raw: OrcamentoPdfDataRaw): Orcamento {
   if (!tipoPagamento.success) {
     throw new Error(`Tipo de pagamento inválido: ${pagamento.tipo}`)
   }
+
+  validatePagamentoIntegridade(pagamento)
 
   const criadoEm = orcamento.created_at.trim()
   if (criadoEm === '') {

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { PAYMENT_TYPES } from "../domain/pagamento/PaymentTypeRegistry";
 
 export const OrcamentoItemSchema = z.object({
   id: z.string().optional(),
@@ -11,7 +12,7 @@ export const OrcamentoItemSchema = z.object({
 });
 
 export const OrcamentoPagamentoSchema = z.object({
-  tipo: z.enum(["dinheiro", "debito", "credito", "pix", "boleto", "financiamento"]),
+  tipo: z.enum(PAYMENT_TYPES),
   valor_entrada: z.number().nonnegative().optional(),
   num_parcelas: z.number().int().positive().optional(),
   taxa_servico_percentual: z.number().nonnegative().optional(),

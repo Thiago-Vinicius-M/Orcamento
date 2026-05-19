@@ -8,6 +8,7 @@ import {
   gerarVencimentosBoleto,
   formatarDataBR,
 } from "../domain/orcamento/parcelamento";
+import { PAYMENT_TYPE_LABELS } from "../domain/pagamento/PaymentTypeRegistry";
 import { calcularValidade30Dias } from "../domain/orcamento/validade";
 import type { Orcamento } from "../types/orcamento";
 
@@ -57,8 +58,6 @@ export interface OrcamentoPdfViewModel {
     descontoValorDisplay: string;
     /** Rótulo da taxa, ex.: "Taxa de serviço (10%)" (vazio se não houver taxa). */
     rotuloTaxa: string;
-    mostrarDesconto: boolean;
-    mostrarTaxa: boolean;
   };
   pagamentoResumo: string;
   /** Detalhes estruturados de pagamento para layout hierárquico no PDF. */
@@ -118,12 +117,6 @@ function buildPagamentoResumo(orcamento: Orcamento): string {
     total: orcamento.total,
   });
 }
-
-const LABELS_PAGAMENTO_SIMPLES: Record<string, string> = {
-  dinheiro: "À vista — Dinheiro",
-  pix: "À vista — Pix",
-  debito: "Débito",
-};
 
 const AVISO_CREDITO =
   "Valores podem sofrer alteração devido a juros da credenciadora de cartão.";
@@ -229,7 +222,7 @@ function buildPagamentoDetalhes(orcamento: Orcamento): PagamentoDetalheViewModel
     return result;
   }
 
-  const label = LABELS_PAGAMENTO_SIMPLES[tipo] ?? tipo;
+  const label = PAYMENT_TYPE_LABELS[tipo as keyof typeof PAYMENT_TYPE_LABELS] ?? tipo;
   return [{ tipo: "titulo", texto: label }];
 }
 
@@ -302,8 +295,6 @@ export function apresentarOrcamentoPdf(
       rotuloDesconto: mostrarDesconto ? rotuloDescontoPdf(orcamento) : "",
       descontoValorDisplay: formatCurrency(-descontos),
       rotuloTaxa: mostrarTaxa ? rotuloTaxaServicoPdf(orcamento, taxasValor) : "",
-      mostrarDesconto,
-      mostrarTaxa
     },
     pagamentoResumo: buildPagamentoResumo(orcamento),
     pagamentoDetalhes: buildPagamentoDetalhes(orcamento),

@@ -8,6 +8,14 @@ import {
   formatarDataBR,
   gerarVencimentosBoleto,
 } from './parcelamento'
+import {
+  isPagamentoTipoSimples,
+  type PagamentoTipoSimples,
+} from '../pagamento/PaymentTypeRegistry'
+
+// Re-exports para compatibilidade com importadores existentes
+export type { PagamentoTipo, PagamentoTipoSimples } from '../pagamento/PaymentTypeRegistry'
+export { isPagamentoTipoSimples }
 
 /** Shape mínimo do bloco pagamento vindo de fontes externas ao domínio (ex.: apresentação PDF). */
 export type PagamentoPdfInput = {
@@ -20,18 +28,10 @@ export type PagamentoPdfInput = {
   intervalo_dias?: number | null
 }
 
-export type PagamentoTipo = 'dinheiro' | 'debito' | 'credito' | 'pix' | 'boleto' | 'financiamento'
+/** Alias amplo: qualquer tipo não-financiamento. */
+export type PagamentoTipoBasico = 'dinheiro' | 'debito' | 'credito' | 'pix' | 'boleto'
 
-/** Tipos que não possuem campos extras além de `tipo`. */
-export type PagamentoTipoSimples = 'dinheiro' | 'debito' | 'pix'
-
-/**
- * Mantido como alias amplo para compatibilidade (inclui credito e boleto).
- * Prefira os tipos específicos PagamentoBasico, PagamentoCredito, PagamentoBoleto.
- */
-export type PagamentoTipoBasico = Exclude<PagamentoTipo, 'financiamento'>
-
-export type PagamentoBasico = { tipo: PagamentoTipoSimples }
+export type PagamentoBasico = { tipo: 'dinheiro' | 'debito' | 'pix' }
 
 export type PagamentoCredito = {
   tipo: 'credito'
@@ -56,7 +56,7 @@ export type PagamentoFinanciamento = {
 export type Pagamento = PagamentoBasico | PagamentoCredito | PagamentoBoleto | PagamentoFinanciamento
 
 export type PagamentoForm = {
-  tipo: PagamentoTipo
+  tipo: 'dinheiro' | 'debito' | 'credito' | 'pix' | 'boleto' | 'financiamento'
   valor_entrada: string
   num_parcelas: string
   taxa_servico_percentual: string
@@ -67,19 +67,13 @@ export type PagamentoForm = {
 
 /** Campos gravados em `orcamento_pagamento` (exceto `orcamento_id`). */
 export type OrcamentoPagamentoInsertFields = {
-  tipo: PagamentoTipo
+  tipo: 'dinheiro' | 'debito' | 'credito' | 'pix' | 'boleto' | 'financiamento'
   valor_entrada?: number | null
   num_parcelas?: number | null
   taxa_servico_percentual?: number | null
   aplicar_taxa?: boolean
   primeiro_vencimento?: string | null
   intervalo_dias?: number | null
-}
-
-const PAGAMENTO_TIPOS_SIMPLES: readonly PagamentoTipoSimples[] = ['dinheiro', 'debito', 'pix']
-
-export function isPagamentoTipoSimples(value: string): value is PagamentoTipoSimples {
-  return (PAGAMENTO_TIPOS_SIMPLES as readonly string[]).includes(value)
 }
 
 /** Guard amplo: qualquer tipo não-financiamento. */

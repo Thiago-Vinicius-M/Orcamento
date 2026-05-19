@@ -52,8 +52,6 @@ exports[`orcamentoPdf caracterização (Fase 0) > ViewModel snapshot 'aVistaDinh
   "totais": {
     "descontoValorDisplay": "-R$ 0,00",
     "descontos": "R$ 0,00",
-    "mostrarDesconto": false,
-    "mostrarTaxa": false,
     "rotuloDesconto": "",
     "rotuloTaxa": "",
     "subtotal": "R$ 2.000,00",
@@ -115,8 +113,6 @@ exports[`orcamentoPdf caracterização (Fase 0) > ViewModel snapshot 'descontoFi
   "totais": {
     "descontoValorDisplay": "-R$ 250,00",
     "descontos": "R$ 250,00",
-    "mostrarDesconto": true,
-    "mostrarTaxa": false,
     "rotuloDesconto": "Desconto aplicado no valor total",
     "rotuloTaxa": "",
     "subtotal": "R$ 2.000,00",
@@ -178,8 +174,6 @@ exports[`orcamentoPdf caracterização (Fase 0) > ViewModel snapshot 'descontoPe
   "totais": {
     "descontoValorDisplay": "-R$ 200,00",
     "descontos": "R$ 200,00",
-    "mostrarDesconto": true,
-    "mostrarTaxa": false,
     "rotuloDesconto": "Desconto aplicado nos itens",
     "rotuloTaxa": "",
     "subtotal": "R$ 2.000,00",
@@ -260,8 +254,6 @@ exports[`orcamentoPdf caracterização (Fase 0) > ViewModel snapshot 'financiame
   "totais": {
     "descontoValorDisplay": "-R$ 0,00",
     "descontos": "R$ 0,00",
-    "mostrarDesconto": false,
-    "mostrarTaxa": false,
     "rotuloDesconto": "",
     "rotuloTaxa": "",
     "subtotal": "R$ 2.000,00",
@@ -322,8 +314,6 @@ exports[`orcamentoPdf caracterização (Fase 0) > ViewModel snapshot 'semGeradoP
   "totais": {
     "descontoValorDisplay": "-R$ 0,00",
     "descontos": "R$ 0,00",
-    "mostrarDesconto": false,
-    "mostrarTaxa": false,
     "rotuloDesconto": "",
     "rotuloTaxa": "",
     "subtotal": "R$ 2.000,00",
@@ -386,8 +376,6 @@ exports[`orcamentoPdf caracterização (Fase 0) > ViewModel snapshot comLogo > v
   "totais": {
     "descontoValorDisplay": "-R$ 0,00",
     "descontos": "R$ 0,00",
-    "mostrarDesconto": false,
-    "mostrarTaxa": false,
     "rotuloDesconto": "",
     "rotuloTaxa": "",
     "subtotal": "R$ 2.000,00",

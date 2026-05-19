@@ -9,7 +9,7 @@ import { drawOrcamentoPdfFooterNumeracao } from "./sections/footer";
 import { drawOrcamentoPdfHeader } from "./sections/header";
 import { drawOrcamentoPdfItemsSection } from "./sections/items";
 import { drawOrcamentoPdfObservationsSection } from "./sections/observations";
-import { drawOrcamentoPdfPaymentAndTermsSection } from "./sections/payment";
+import { drawOrcamentoPdfPaymentAndTermsSection } from "./sections/payment/PaymentSectionRenderer";
 import { drawOrcamentoPdfTotalsSection } from "./sections/totals";
 
 export type RenderizarOrcamentoPdfLayoutOptions = {
@@ -94,7 +94,7 @@ export async function renderOrcamentoPdfLayout(
     drawTextLine,
   });
 
-  drawOrcamentoPdfPaymentAndTermsSection(ctx, model, {
+  ctx = drawOrcamentoPdfPaymentAndTermsSection(ctx, model, {
     margin: m,
     pageCtx,
     fontTitle,

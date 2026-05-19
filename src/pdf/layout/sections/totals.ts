@@ -39,7 +39,7 @@ export function drawOrcamentoPdfTotalsSection(
   painter.drawRight(c.page, model.totais.subtotal, xResumoDir, yResumo, 8.5, fontNormal, PDF_TEXT_MEDIUM);
   yResumo -= lh + gapResumo;
 
-  if (model.totais.mostrarDesconto) {
+  if (model.totais.rotuloDesconto) {
     const rotuloDesc = painter.truncateToWidth(fontTitle, model.totais.rotuloDesconto, maxRotuloW, 9.5);
     c.page.drawText(rotuloDesc, {
       x: margin,
@@ -52,7 +52,7 @@ export function drawOrcamentoPdfTotalsSection(
     yResumo -= lh + gapResumo;
   }
 
-  if (model.totais.mostrarTaxa) {
+  if (model.totais.rotuloTaxa) {
     const rotuloTaxa = painter.truncateToWidth(fontNormal, model.totais.rotuloTaxa, maxRotuloW, 9);
     c.page.drawText(rotuloTaxa, {
       x: margin,

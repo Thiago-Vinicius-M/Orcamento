@@ -1,3 +1,5 @@
+import { getCachedLogo, setCachedLogo } from "./PdfAssetCache";
+
 export type LogoImageData = { bytes: Uint8Array; format: 'png' | 'jpg' }
 
 function detectFormat(bytes: Uint8Array): 'png' | 'jpg' | null {
@@ -36,22 +38,34 @@ export async function loadLogoForPdf(
 ): Promise<LogoImageData | null> {
   if (!url || url.trim() === '') return null
 
+  const cached = getCachedLogo(url);
+  if (cached !== undefined) return cached;
+
+  let result: LogoImageData | null = null;
+
   if (url.startsWith('data:')) {
-    return decodeDataUrl(url)
+    result = decodeDataUrl(url);
+  } else {
+    try {
+      const res = await fetch(url)
+      if (!res.ok) {
+        result = null;
+      } else {
+        const buffer = await res.arrayBuffer()
+        const bytes = new Uint8Array(buffer)
+        const format = detectFormat(bytes)
+        if (!format) {
+          console.warn('[PDF logo] Formato não suportado (apenas PNG e JPEG). Logo ignorada.')
+          result = null;
+        } else {
+          result = { bytes, format };
+        }
+      }
+    } catch {
+      result = null;
+    }
   }
 
-  try {
-    const res = await fetch(url)
-    if (!res.ok) return null
-    const buffer = await res.arrayBuffer()
-    const bytes = new Uint8Array(buffer)
-    const format = detectFormat(bytes)
-    if (!format) {
-      console.warn('[PDF logo] Formato não suportado (apenas PNG e JPEG). Logo ignorada.')
-      return null
-    }
-    return { bytes, format }
-  } catch {
-    return null
-  }
+  setCachedLogo(url, result);
+  return result;
 }

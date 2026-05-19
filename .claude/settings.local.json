@@ -37,7 +37,13 @@
       "Bash(node --input-type=module)",
       "Bash(Get-ChildItem -Path \"e:\\\\Projetos\\\\NewOrca\\\\src\\\\pdf\" -Recurse -File)",
       "Bash(xargs grep -l \"nextOrcamentoNumeroPdf\\\\|numero_pdf\")",
-      "Bash(grep -r \"0001-A\" \"e:\\\\Projetos\\\\NewOrca\" 2>nul | head -10)"
+      "Bash(grep -r \"0001-A\" \"e:\\\\Projetos\\\\NewOrca\" 2>nul | head -10)",
+      "Bash(Get-ChildItem -Path \"e:\\\\Projetos\\\\NewOrca\" -Recurse -Directory -Filter \"src\")",
+      "Bash(Select-Object -First 5)",
+      "Bash(xargs grep -l \"interface Orcamento\\\\|type Orcamento\")",
+      "Bash(xargs grep -l \"option.*value.*dinheiro\\\\|select.*payment\")",
+      "Bash(xargs grep -l \"pagamento\\\\|payment\")",
+      "Bash(del \"e:\\\\Projetos\\\\NewOrca\\\\src\\\\pdf\\\\__tests__\\\\__snapshots__\\\\orcamentoPdf.characterization.test.ts.snap\")"
     ],
     "additionalDirectories": [
       "e:\\Projetos\\NewOrca"

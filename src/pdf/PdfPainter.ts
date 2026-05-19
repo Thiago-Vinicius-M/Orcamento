@@ -1,14 +1,15 @@
-import { rgb, type PDFFont, type PDFPage } from "pdf-lib";
+import { type PDFFont, type PDFPage } from "pdf-lib";
 import type { PdfDrawContext, PdfRgb } from "./pdfTypes";
+import { PDF_COLORS } from "./PdfDesignTokens";
 
-/** Paleta do PDF (alinhada ao renderer legado). */
-export const PDF_PRIMARY = rgb(0.06, 0.15, 0.28);
-export const PDF_ACCENT = rgb(0, 0.48, 1);
-export const PDF_TEXT_DARK = rgb(0.13, 0.13, 0.13);
-export const PDF_TEXT_MEDIUM = rgb(0.4, 0.4, 0.4);
-export const PDF_BORDER = rgb(0.88, 0.9, 0.92);
-export const PDF_BG_LIGHT = rgb(0.97, 0.98, 0.99);
-export const PDF_WHITE = rgb(1, 1, 1);
+/** Re-exports de compatibilidade — fonte de verdade em PdfDesignTokens. */
+export const PDF_PRIMARY    = PDF_COLORS.PRIMARY;
+export const PDF_ACCENT     = PDF_COLORS.ACCENT;
+export const PDF_TEXT_DARK  = PDF_COLORS.TEXT_DARK;
+export const PDF_TEXT_MEDIUM = PDF_COLORS.TEXT_MEDIUM;
+export const PDF_BORDER     = PDF_COLORS.BORDER;
+export const PDF_BG_LIGHT   = PDF_COLORS.BG_LIGHT;
+export const PDF_WHITE      = PDF_COLORS.WHITE;
 
 export class PdfPainter {
   private readonly fontTitle: PDFFont;
